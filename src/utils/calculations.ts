@@ -1,5 +1,45 @@
 import type { PositionSize } from '../types/api';
 
+// Cumulative Normal Distribution
+function cnd(x: number): number {
+  const a1 = 0.31938153;
+  const a2 = -0.356563782;
+  const a3 = 1.781477937;
+  const a4 = -1.821255978;
+  const a5 = 1.330274429;
+  const L = Math.abs(x);
+  const K = 1.0 / (1.0 + 0.2316419 * L);
+  let w = 1.0 - 1.0 / Math.sqrt(2.0 * Math.PI) * Math.exp(-L * L / 2.0) * (a1 * K + a2 * K * K + a3 * Math.pow(K, 3) + a4 * Math.pow(K, 4) + a5 * Math.pow(K, 5));
+  if (x < 0) w = 1.0 - w;
+  return w;
+}
+
+export function calculateDelta(
+  spot: number,
+  strike: number,
+  expiryDateStr: string,
+  volatility: number, // e.g., 0.15 for 15%
+  optionType: 'CE' | 'PE'
+): number {
+  try {
+    const now = new Date();
+    const expiry = new Date(expiryDateStr);
+    const t = Math.max((expiry.getTime() - now.getTime()) / (365 * 24 * 60 * 60 * 1000), 0.0001); // Time in years
+    const r = 0.07; // 7% Risk-free rate
+    const v = volatility;
+    
+    const d1 = (Math.log(spot / strike) + (r + (v * v) / 2) * t) / (v * Math.sqrt(t));
+    
+    if (optionType === 'CE') {
+      return cnd(d1);
+    } else {
+      return cnd(d1) - 1;
+    }
+  } catch (e) {
+    return optionType === 'CE' ? 0.5 : -0.5;
+  }
+}
+
 export function calculatePositionSize(
   capital: number,
   riskPercent: number,
@@ -10,14 +50,12 @@ export function calculatePositionSize(
   const maxRiskAmount = capital * (riskPercent / 100);
   const positionLots = stopLoss > 0 ? Math.floor(maxRiskAmount / (stopLoss * lotSize)) : 0;
   const totalPremium = premium * lotSize * positionLots;
-  const breakeven = 0;
-  const riskReward = 0;
   return {
     maxRiskAmount,
     positionLots,
     totalPremium,
-    breakeven,
-    riskReward,
+    breakeven: 0,
+    riskReward: 0,
   };
 }
 

@@ -66,6 +66,10 @@ export function useOptionChain() {
           pe_ltp: parseFloat(s.PE?.ltp || '0') || 0,
           ce_oi: parseInt(s.CE?.oi || '0', 10) || 0,
           pe_oi: parseInt(s.PE?.oi || '0', 10) || 0,
+          ce_v: parseInt(s.CE?.v || '0', 10) || 0,
+          pe_v: parseInt(s.PE?.v || '0', 10) || 0,
+          ce_pdoi: parseInt(s.CE?.pdoi || '0', 10) || 0,
+          pe_pdoi: parseInt(s.PE?.pdoi || '0', 10) || 0,
         }));
 
         setOptionChain({

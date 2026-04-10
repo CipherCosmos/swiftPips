@@ -219,6 +219,7 @@ function App() {
               selectedStrike={selectedStrike}
               selectedOptionType={selectedOptionType}
               setSelectedOptionType={setSelectedOptionType}
+              selectedExpiry={selectedExpiry}
             />
 
             <div className="glass-card overflow-hidden">

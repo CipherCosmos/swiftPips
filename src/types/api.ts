@@ -15,6 +15,10 @@ export interface StrikeData {
   pe_ltp: number;
   ce_oi: number;
   pe_oi: number;
+  ce_v: number;
+  pe_v: number;
+  ce_pdoi: number;
+  pe_pdoi: number;
   ce_iv?: number;
   pe_iv?: number;
 }
@@ -29,10 +33,14 @@ export interface RawStrikeData {
   CE?: {
     ltp: string;
     oi: string;
+    v?: string;
+    pdoi?: string;
   };
   PE?: {
     ltp: string;
     oi: string;
+    v?: string;
+    pdoi?: string;
   };
 }
 

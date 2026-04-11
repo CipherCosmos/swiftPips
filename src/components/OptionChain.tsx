@@ -26,49 +26,41 @@ export function OptionChain({
   const containerRef = useRef<HTMLDivElement>(null);
   const atmRowRef = useRef<HTMLTableRowElement>(null);
 
-  // Identify interval
   const interval = useMemo(() => {
     if (allStrikes.length < 2) return 100;
     return Math.abs(allStrikes[1].strike_price - allStrikes[0].strike_price);
   }, [allStrikes]);
 
-  // Filter and Sort Strikes
   const strikes = useMemo(() => {
     if (!atmStrike) return allStrikes;
-    const filtered = allStrikes.filter(s => 
+    const filtered = allStrikes.filter(s =>
       Math.abs(s.strike_price - atmStrike) <= (strikeDepth * interval)
     );
     return isReversed ? [...filtered].sort((a, b) => b.strike_price - a.strike_price) : filtered;
   }, [allStrikes, atmStrike, strikeDepth, interval, isReversed]);
 
-  // Concentration Analytics - Strict 2nd ITM to OTM Baseline
+  // ─── Concentration Analytics ───
   const analytics = useMemo(() => {
     if (!atmStrike) return null;
 
     const getMetrics = (side: 'ce' | 'pe') => {
-      // 2nd ITM to OTM Range
-      const baseRange = allStrikes.filter(s => 
-        side === 'ce' 
-          ? s.strike_price >= (atmStrike - 2 * interval) 
+      const baseRange = allStrikes.filter(s =>
+        side === 'ce'
+          ? s.strike_price >= (atmStrike - 2 * interval)
           : s.strike_price <= (atmStrike + 2 * interval)
       );
 
       const getStats = (extractor: (s: StrikeData) => number) => {
         const values = baseRange.map(extractor);
         const max = Math.max(...values, 1);
-        
-        // Find top 3 ranking with distance tie-break
         const sortedRanking = [...baseRange]
           .map(s => ({
             strike: s.strike_price,
             val: extractor(s),
             pct: (extractor(s) / max) * 100,
-            dist: Math.abs(s.strike_price - atmStrike)
+            dist: Math.abs(s.strike_price - atmStrike),
           }))
-          .sort((a, b) => {
-            if (b.val !== a.val) return b.val - a.val;
-            return a.dist - b.dist; // Tie-break: Closest to ATM
-          });
+          .sort((a, b) => b.val !== a.val ? b.val - a.val : a.dist - b.dist);
 
         return {
           max,
@@ -85,10 +77,22 @@ export function OptionChain({
       };
     };
 
-    return { ce: getMetrics('ce'), pe: getMetrics('pe') };
+    // Global max values for inline bar scaling
+    const allCeOI = allStrikes.map(s => s.ce_oi);
+    const allPeOI = allStrikes.map(s => s.pe_oi);
+    const allCeVol = allStrikes.map(s => s.ce_v);
+    const allPeVol = allStrikes.map(s => s.pe_v);
+    const globalMaxOI = Math.max(...allCeOI, ...allPeOI, 1);
+    const globalMaxVol = Math.max(...allCeVol, ...allPeVol, 1);
+
+    return {
+      ce: getMetrics('ce'),
+      pe: getMetrics('pe'),
+      globalMaxOI,
+      globalMaxVol,
+    };
   }, [allStrikes, atmStrike, interval]);
 
-  // Auto-scroll to ATM
   useEffect(() => {
     if (atmRowRef.current && containerRef.current) {
       atmRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -99,19 +103,24 @@ export function OptionChain({
     if (!analytics) return '';
     const data = side === 'CE' ? analytics.ce[metric] : analytics.pe[metric];
     const pct = (val / data.max) * 100;
-
-    if (pct > 100) return 'bg-[#0000FF] text-white'; // Breakout Blue
+    if (pct > 100) return 'bg-[#0000FF] text-white';
 
     if (side === 'CE') {
-      if (strike === data.top1) return 'bg-[#FF0000] text-white font-bold'; // 100% Red
-      if (strike === data.top2) return 'bg-[#FF6666] text-white';
-      if (strike === data.top3) return 'bg-[#FFCCCC] text-slate-900';
+      if (strike === data.top1) return 'bg-rose-600/40 text-rose-200 font-bold';
+      if (strike === data.top2) return 'bg-rose-600/20 text-rose-300';
+      if (strike === data.top3) return 'bg-rose-600/10 text-rose-400';
     } else {
-      if (strike === data.top1) return 'bg-[#00FF00] text-slate-900 font-bold'; // 100% Green
-      if (strike === data.top2) return 'bg-[#66FF66] text-slate-900';
-      if (strike === data.top3) return 'bg-[#CCFFCC] text-slate-900';
+      if (strike === data.top1) return 'bg-emerald-600/40 text-emerald-200 font-bold';
+      if (strike === data.top2) return 'bg-emerald-600/20 text-emerald-300';
+      if (strike === data.top3) return 'bg-emerald-600/10 text-emerald-400';
     }
     return '';
+  };
+
+  // Inline bar width for OI visualization
+  const getOIBarWidth = (val: number) => {
+    if (!analytics) return 0;
+    return Math.min(100, (val / analytics.globalMaxOI) * 100);
   };
 
   return (
@@ -119,17 +128,22 @@ export function OptionChain({
       <table className="w-full border-collapse text-[10px] font-mono leading-tight bg-[#020617]/40">
         <thead className="sticky top-0 z-30">
           <tr className="bg-[#0f172a] border-b border-white/10 shadow-xl text-slate-500 uppercase tracking-widest text-[8px]">
-            <th className="px-1 py-4 text-center border-r border-white/5 w-12 text-blue-400" title="Delta / Theta">D/T</th>
-            <th className="px-1 py-4 text-center border-r border-white/5 w-16 text-fuchsia-400">Gamma</th>
-            <th className="px-1 py-4 text-center border-r border-white/5 w-16">OI%</th>
-            <th className="px-1 py-4 text-center border-r border-white/5 w-16 text-yellow-400">OIC%</th>
-            <th className="px-4 py-4 text-right border-r-2 border-emerald-500/20 w-24">LTP (CE)</th>
-            <th className="px-4 py-4 text-center bg-[#020617] w-28 text-emerald-500 border-x border-white/5">Strike</th>
-            <th className="px-4 py-4 text-left border-l-2 border-rose-500/20 w-24">LTP (PE)</th>
-            <th className="px-1 py-4 text-center border-l border-white/5 w-16 text-yellow-400">OIC%</th>
-            <th className="px-1 py-4 text-center border-l border-white/5 w-16">OI%</th>
-            <th className="px-1 py-4 text-center border-l border-white/5 w-16 text-fuchsia-400">Gamma</th>
-            <th className="px-1 py-4 text-center border-l border-white/5 w-12 text-blue-400" title="Delta / Theta">D/T</th>
+            {/* CE Side */}
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-blue-400" title="Delta / Theta">Δ/Θ</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-fuchsia-400">Γ</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-14">OI</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-14 text-yellow-400">OIC</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-12">Vol</th>
+            <th className="px-3 py-3.5 text-right border-r-2 border-rose-500/20 w-20">CE LTP</th>
+            {/* Strike */}
+            <th className="px-3 py-3.5 text-center bg-[#020617] w-24 text-emerald-500 border-x border-white/5">Strike</th>
+            {/* PE Side */}
+            <th className="px-3 py-3.5 text-left border-l-2 border-emerald-500/20 w-20">PE LTP</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-12">Vol</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-14 text-yellow-400">OIC</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-14">OI</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-fuchsia-400">Γ</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-blue-400" title="Delta / Theta">Δ/Θ</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.03]">
@@ -138,7 +152,7 @@ export function OptionChain({
             const isSelected = s.strike_price === selectedStrike;
             const isITM_CE = atmStrike ? s.strike_price < atmStrike : false;
             const isITM_PE = atmStrike ? s.strike_price > atmStrike : false;
-            
+
             const ce_oic = s.ce_oi - s.ce_pdoi;
             const pe_oic = s.pe_oi - s.pe_pdoi;
 
@@ -147,26 +161,81 @@ export function OptionChain({
             const ceGreeks = calculateGreeks(effectiveSpot, s.strike_price, dte, true);
             const peGreeks = calculateGreeks(effectiveSpot, s.strike_price, dte, false);
 
-            const formatCell = (val: number, side: 'CE' | 'PE', metric: 'vol' | 'oi' | 'oic') => {
+            // Scalper signals
+            const ceShortCovering = ce_oic < 0; // CE OIC dropping = bullish
+            const peLongUnwinding = pe_oic < 0;  // PE OIC dropping = bearish
+
+            const formatOI = (val: number, side: 'CE' | 'PE') => {
               if (!analytics) return '?';
-              const max = side === 'CE' ? analytics.ce[metric].max : analytics.pe[metric].max;
+              const max = side === 'CE' ? analytics.ce.oi.max : analytics.pe.oi.max;
               const pct = (val / max) * 100;
-              
-              // Emphasize Short Covering (CE OIC < 0) or Long Unwinding (PE OIC < 0)
-              const isShortCovering = metric === 'oic' && side === 'CE' && val < 0;
-              const isLongUnwinding = metric === 'oic' && side === 'PE' && val < 0;
-              const oicHighlight = isShortCovering ? 'text-emerald-400 font-black animate-pulse' : isLongUnwinding ? 'text-rose-400 font-black animate-pulse' : '';
+              const barW = getOIBarWidth(val);
+              const barColor = side === 'CE' ? 'bg-rose-500/20' : 'bg-emerald-500/20';
 
               return (
-                <div 
-                  className={`flex flex-col items-center justify-center h-full w-full py-2 transition-colors ${getCellStyle(s.strike_price, val, side, metric)} ${oicHighlight}`}
-                  title={`Raw: ${val.toLocaleString()} | Concentration: ${pct.toFixed(2)}%`}
+                <div
+                  className={`relative flex flex-col items-center justify-center h-full w-full py-1.5 transition-colors ${getCellStyle(s.strike_price, val, side, 'oi')}`}
+                  title={`OI: ${val.toLocaleString()} | ${pct.toFixed(1)}%`}
                 >
-                  <span className="font-bold">{pct.toFixed(2)}%</span>
-                  <span className="text-[7px] opacity-60">{(val / 1000).toFixed(0)}k</span>
+                  {/* Background bar */}
+                  <div className={`absolute inset-y-0 ${side === 'CE' ? 'right-0' : 'left-0'} ${barColor} transition-all duration-500`}
+                    style={{ width: `${barW}%` }} />
+                  <span className="relative font-bold z-10">{pct.toFixed(1)}%</span>
+                  <span className="relative text-[7px] opacity-50 z-10">{(val / 1000).toFixed(0)}k</span>
                 </div>
               );
             };
+
+            const formatOIC = (val: number, side: 'CE' | 'PE') => {
+              if (!analytics) return '?';
+              const max = side === 'CE' ? analytics.ce.oic.max : analytics.pe.oic.max;
+              const pct = max > 0 ? (val / max) * 100 : 0;
+
+              const isSignal = (side === 'CE' && ceShortCovering) || (side === 'PE' && peLongUnwinding);
+              const signalClass = isSignal
+                ? side === 'CE'
+                  ? 'text-emerald-400 font-black' // CE short covering = bullish
+                  : 'text-rose-400 font-black'    // PE long unwinding = bearish
+                : '';
+
+              return (
+                <div
+                  className={`flex flex-col items-center justify-center h-full w-full py-1.5 transition-colors ${getCellStyle(s.strike_price, val, side, 'oic')} ${signalClass}`}
+                  title={`OIC: ${val.toLocaleString()} | ${pct.toFixed(1)}%`}
+                >
+                  <span className="font-bold flex items-center gap-0.5">
+                    {isSignal && <span className="text-[8px] animate-pulse">{side === 'CE' ? '▲' : '▼'}</span>}
+                    {pct.toFixed(1)}%
+                  </span>
+                  <span className="text-[7px] opacity-50">{val > 0 ? '+' : ''}{(val / 1000).toFixed(0)}k</span>
+                </div>
+              );
+            };
+
+            const formatVol = (val: number, side: 'CE' | 'PE') => {
+              if (!analytics) return '-';
+              const max = side === 'CE' ? analytics.ce.vol.max : analytics.pe.vol.max;
+              const pct = max > 0 ? (val / max) * 100 : 0;
+              const intensity = Math.min(1, pct / 100);
+
+              return (
+                <div className="flex flex-col items-center justify-center h-full w-full py-1.5"
+                  title={`Vol: ${val.toLocaleString()} | ${pct.toFixed(1)}%`}>
+                  <span className="font-bold" style={{ opacity: 0.4 + intensity * 0.6 }}>{(val / 1000).toFixed(0)}k</span>
+                  {pct > 80 && <span className="text-[6px] text-amber-400 font-black animate-pulse">HOT</span>}
+                </div>
+              );
+            };
+
+            // Moneyness tag
+            const moneyness = (() => {
+              if (!atmStrike) return '';
+              const diff = Math.abs(s.strike_price - atmStrike);
+              if (diff === 0) return 'ATM';
+              const steps = Math.round(diff / interval);
+              if (steps <= 2) return '';
+              return `${steps}${isITM_CE || isITM_PE ? 'ITM' : 'OTM'}`;
+            })();
 
             return (
               <tr
@@ -174,29 +243,57 @@ export function OptionChain({
                 ref={isATM ? atmRowRef : null}
                 onClick={() => onSelectStrike(s.strike_price)}
                 data-atm={isATM}
-                className={`group cursor-pointer transition-all hover:bg-white/[0.04] relative ${isSelected ? 'active-row' : ''}`}
+                className={`group cursor-pointer transition-all relative
+                  ${isSelected ? 'active-row bg-emerald-500/[0.06]' : 'hover:bg-white/[0.03]'}
+                  ${isATM ? 'bg-amber-500/[0.04]' : ''}
+                `}
               >
-                <td className="px-1 py-2 border-r border-white/5 opacity-80 text-center">
-                  <div className="text-[10px] text-blue-400 font-bold">{ceGreeks.delta.toFixed(2)}</div>
-                  <div className="text-[8px] text-rose-500/70">{ceGreeks.theta.toFixed(1)}</div>
+                {/* CE D/T */}
+                <td className="px-1 py-2 border-r border-white/5 text-center">
+                  <div className={`text-[10px] font-bold ${ceGreeks.delta > 0.7 ? 'text-emerald-400' : ceGreeks.delta > 0.4 ? 'text-blue-400' : 'text-slate-500'}`}>{ceGreeks.delta.toFixed(2)}</div>
+                  <div className="text-[7px] text-rose-500/60">{ceGreeks.theta.toFixed(1)}</div>
                 </td>
-                <td className="px-1 py-2 text-center border-r border-white/5 text-fuchsia-400/80 font-mono">{ceGreeks.gamma.toFixed(4)}</td>
-                <td className="p-0 text-center border-r border-white/5">{formatCell(s.ce_oi, 'CE', 'oi')}</td>
-                <td className="p-0 text-center border-r border-white/5">{formatCell(ce_oic, 'CE', 'oic')}</td>
-                <td className={`px-4 py-3 text-right border-r-2 border-emerald-500/20 font-bold ${isITM_CE ? 'bg-emerald-500/[0.06] text-emerald-400' : 'text-slate-400 opacity-60'}`}>₹{s.ce_ltp.toFixed(2)}</td>
-                <td className="px-4 py-3 text-center font-black bg-[#020617] border-x border-white/5">
-                  <div className={`py-1.5 rounded-lg border transition-all ${isSelected ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400' : isATM ? 'border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-transparent text-slate-400'}`}>
+                {/* CE Gamma */}
+                <td className="px-1 py-2 text-center border-r border-white/5 text-fuchsia-400/70 text-[9px]">{ceGreeks.gamma.toFixed(4)}</td>
+                {/* CE OI */}
+                <td className="p-0 text-center border-r border-white/5">{formatOI(s.ce_oi, 'CE')}</td>
+                {/* CE OIC */}
+                <td className="p-0 text-center border-r border-white/5">{formatOIC(ce_oic, 'CE')}</td>
+                {/* CE Vol */}
+                <td className="p-0 text-center border-r border-white/5">{formatVol(s.ce_v, 'CE')}</td>
+                {/* CE LTP */}
+                <td className={`px-3 py-2.5 text-right border-r-2 border-rose-500/20 font-bold tabular-nums ${isITM_CE ? 'text-emerald-400 bg-emerald-500/[0.04]' : 'text-slate-500'}`}>
+                  ₹{s.ce_ltp.toFixed(2)}
+                </td>
+
+                {/* STRIKE */}
+                <td className="px-3 py-2.5 text-center font-black bg-[#020617] border-x border-white/5">
+                  <div className={`py-1 rounded-lg border transition-all ${
+                    isSelected ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                    : isATM ? 'border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
+                    : 'border-transparent text-slate-400'}`}>
                     <span className="text-xs">{s.strike_price.toLocaleString()}</span>
-                    {isATM && <span className="text-[6px] font-black uppercase block mt-0.5">ATM</span>}
+                    {isATM && <span className="text-[6px] font-black uppercase block mt-0.5 text-amber-500">ATM</span>}
+                    {moneyness && !isATM && <span className="text-[5px] font-bold uppercase block mt-0.5 text-slate-600">{moneyness}</span>}
                   </div>
                 </td>
-                <td className={`px-4 py-3 text-left border-l-2 border-rose-500/20 font-bold ${isITM_PE ? 'bg-rose-500/[0.06] text-rose-400' : 'text-slate-400 opacity-60'}`}>₹{s.pe_ltp.toFixed(2)}</td>
-                <td className="p-0 text-center border-l border-white/5">{formatCell(pe_oic, 'PE', 'oic')}</td>
-                <td className="p-0 text-center border-l border-white/5">{formatCell(s.pe_oi, 'PE', 'oi')}</td>
-                <td className="px-1 py-2 text-center border-l border-white/5 text-fuchsia-400/80 font-mono">{peGreeks.gamma.toFixed(4)}</td>
-                <td className="px-1 py-2 border-l border-white/5 opacity-80 text-center">
-                  <div className="text-[10px] text-blue-400 font-bold">{peGreeks.delta.toFixed(2)}</div>
-                  <div className="text-[8px] text-rose-500/70">{peGreeks.theta.toFixed(1)}</div>
+
+                {/* PE LTP */}
+                <td className={`px-3 py-2.5 text-left border-l-2 border-emerald-500/20 font-bold tabular-nums ${isITM_PE ? 'text-rose-400 bg-rose-500/[0.04]' : 'text-slate-500'}`}>
+                  ₹{s.pe_ltp.toFixed(2)}
+                </td>
+                {/* PE Vol */}
+                <td className="p-0 text-center border-l border-white/5">{formatVol(s.pe_v, 'PE')}</td>
+                {/* PE OIC */}
+                <td className="p-0 text-center border-l border-white/5">{formatOIC(pe_oic, 'PE')}</td>
+                {/* PE OI */}
+                <td className="p-0 text-center border-l border-white/5">{formatOI(s.pe_oi, 'PE')}</td>
+                {/* PE Gamma */}
+                <td className="px-1 py-2 text-center border-l border-white/5 text-fuchsia-400/70 text-[9px]">{peGreeks.gamma.toFixed(4)}</td>
+                {/* PE D/T */}
+                <td className="px-1 py-2 border-l border-white/5 text-center">
+                  <div className={`text-[10px] font-bold ${Math.abs(peGreeks.delta) > 0.7 ? 'text-rose-400' : Math.abs(peGreeks.delta) > 0.4 ? 'text-blue-400' : 'text-slate-500'}`}>{peGreeks.delta.toFixed(2)}</div>
+                  <div className="text-[7px] text-rose-500/60">{peGreeks.theta.toFixed(1)}</div>
                 </td>
               </tr>
             );

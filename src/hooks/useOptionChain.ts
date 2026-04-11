@@ -23,6 +23,74 @@ export function useOptionChain(depth: number = 15) {
   const [refreshInterval, setRefreshInterval] = useState<number | null>(null);
   
   const currentTokensRef = useRef<string[]>([]);
+
+  // ─── Tick Batching ───
+  // Instead of calling setOptionChain on every single tick (60+ per second),
+  // we accumulate ticks in a buffer and flush every 100ms  in one state update.
+  const tickBufferRef = useRef<Map<string, TickData>>(new Map());
+  const flushTimerRef = useRef<number | null>(null);
+
+  const flushTickBuffer = useCallback(() => {
+    flushTimerRef.current = null;
+    const buffer = tickBufferRef.current;
+    if (buffer.size === 0) return;
+
+    // Take a snapshot & clear the buffer
+    const ticks = new Map(buffer);
+    buffer.clear();
+
+    setOptionChain(prev => {
+      if (!prev) return null;
+
+      let changed = false;
+      const newStrikes = prev.strikes.map(s => {
+        // Check CE and PE tokens against batched ticks
+        const ceTick = s.ce_token ? ticks.get(s.ce_token) : undefined;
+        const peTick = s.pe_token ? ticks.get(s.pe_token) : undefined;
+
+        if (!ceTick && !peTick) return s;
+
+        changed = true;
+        const updated = { ...s };
+
+        if (ceTick) {
+          if (ceTick.lp) updated.ce_ltp = parseNum(ceTick.lp);
+          if (ceTick.oi) updated.ce_oi = parseNum(ceTick.oi);
+          if (ceTick.v) updated.ce_v = parseNum(ceTick.v);
+          if (ceTick.poi) updated.ce_pdoi = parseNum(ceTick.poi);
+        }
+        if (peTick) {
+          if (peTick.lp) updated.pe_ltp = parseNum(peTick.lp);
+          if (peTick.oi) updated.pe_oi = parseNum(peTick.oi);
+          if (peTick.v) updated.pe_v = parseNum(peTick.v);
+          if (peTick.poi) updated.pe_pdoi = parseNum(peTick.poi);
+        }
+        return updated;
+      });
+
+      return changed ? { ...prev, strikes: newStrikes } : prev;
+    });
+  }, []);
+
+  const handleTick = useCallback((tick: TickData) => {
+    // Buffer the tick keyed by token — later ticks overwrite earlier for same token
+    tickBufferRef.current.set(tick.tk, tick);
+
+    // Schedule a flush if not already pending
+    if (flushTimerRef.current === null) {
+      flushTimerRef.current = window.setTimeout(flushTickBuffer, 100);
+    }
+  }, [flushTickBuffer]);
+
+  // Cleanup flush timer on unmount
+  useEffect(() => {
+    return () => {
+      if (flushTimerRef.current !== null) {
+        clearTimeout(flushTimerRef.current);
+      }
+    };
+  }, []);
+
   const fetchUnderlyings = useCallback(async () => {
     try {
       setError(null);
@@ -56,35 +124,6 @@ export function useOptionChain(depth: number = 15) {
     }
   }, []);
 
-  const handleTick = useCallback((tick: TickData) => {
-    setOptionChain(prev => {
-      if (!prev) return null;
-      
-      const newStrikes = prev.strikes.map(s => {
-        const isCE = s.ce_token === tick.tk;
-        const isPE = s.pe_token === tick.tk;
-
-        if (!isCE && !isPE) return s;
-
-        const updated = { ...s };
-        if (isCE) {
-          if (tick.lp) updated.ce_ltp = parseNum(tick.lp);
-          if (tick.oi) updated.ce_oi = parseNum(tick.oi);
-          if (tick.v) updated.ce_v = parseNum(tick.v);
-          if (tick.poi) updated.ce_pdoi = parseNum(tick.poi);
-        } else {
-          if (tick.lp) updated.pe_ltp = parseNum(tick.lp);
-          if (tick.oi) updated.pe_oi = parseNum(tick.oi);
-          if (tick.v) updated.pe_v = parseNum(tick.v);
-          if (tick.poi) updated.pe_pdoi = parseNum(tick.poi);
-        }
-        return updated;
-      });
-
-      return { ...prev, strikes: newStrikes };
-    });
-  }, []);
-
   const fetchOptionChain = useCallback(async () => {
     if (!selectedUnderlying || !selectedExpiry) return;
     try {
@@ -100,8 +139,6 @@ export function useOptionChain(depth: number = 15) {
           return '0';
         };
 
-        const logOI = (...values: number[]) => console.log('OI values sample:', values.slice(0, 4));
-        
         const mappedStrikes: StrikeData[] = result.data.map(s => {
           const ceRaw = (s as any).CE || {};
           const peRaw = (s as any).PE || {};
@@ -133,20 +170,12 @@ export function useOptionChain(depth: number = 15) {
             return 0;
           };
 
-          const ceOI = getOI(ceRaw);
-          const peOI = getOI(peRaw);
-          
-          // Debug first few strikes
-          if (result.data.indexOf(s) < 3) {
-            logOI(ceOI, peOI);
-          }
-
           return {
             strike_price: getStrikePrice(),
             ce_ltp: parseNum(ceRaw.ltp || '0'),
             pe_ltp: parseNum(peRaw.ltp || '0'),
-            ce_oi: ceOI,
-            pe_oi: peOI,
+            ce_oi: getOI(ceRaw),
+            pe_oi: getOI(peRaw),
             ce_v: parseNum(getVal(ceRaw, ['v', 'vol', 'volume', 'total_vol', 'tv', 'vol'])),
             pe_v: parseNum(getVal(peRaw, ['v', 'vol', 'volume', 'total_vol', 'tv', 'vol'])),
             ce_pdoi: getPDOI(ceRaw),

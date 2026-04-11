@@ -36,8 +36,6 @@ async function fetchAPI<T>(path: string, payload: object = {}, method: 'GET' | '
     throw new Error('Authentication token not set');
   }
 
-  console.log(`Using ${method} for ${path}`);
-
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
@@ -67,21 +65,58 @@ async function fetchAPI<T>(path: string, payload: object = {}, method: 'GET' | '
 export function clearAuthToken() {
   authToken = null;
   localStorage.removeItem('aliceblue_token');
+  // Clear session caches on logout
+  sessionCache.clear();
+}
+
+// ─── Session-Level Cache ───
+// Stores data that doesn't change within a trading session.
+// Keys: "underlyings", "expiries:{underlying}", "wsSession"
+const sessionCache = new Map<string, { data: any; ts: number }>();
+
+// TTL: 10 minutes for underlyings/expiries (they don't change intra-day)
+const SESSION_CACHE_TTL = 10 * 60 * 1000;
+
+function getSessionCache<T>(key: string): T | null {
+  const entry = sessionCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > SESSION_CACHE_TTL) {
+    sessionCache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function setSessionCache(key: string, data: any) {
+  sessionCache.set(key, { data, ts: Date.now() });
 }
 
 export async function getUnderlyings(): Promise<string[]> {
+  const cacheKey = 'underlyings';
+  const cached = getSessionCache<string[]>(cacheKey);
+  if (cached) return cached;
+
   const response = await fetchAPI<UnderlyingResponse>('/obrest/optionChain/getUnderlying', { exch: 'nse_fo' });
-  return response.result[0]?.list_underlying || [];
+  const result = response.result[0]?.list_underlying || [];
+  setSessionCache(cacheKey, result);
+  return result;
 }
 
 export async function getExpiries(underlying: string): Promise<string[]> {
+  const cacheKey = `expiries:${underlying}`;
+  const cached = getSessionCache<string[]>(cacheKey);
+  if (cached) return cached;
+
   const response = await fetchAPI<ExpiryResponse>('/obrest/optionChain/getUnderlyingExp', {
     underlying,
     exch: 'nse_fo'
   });
-  return response.result[0]?.underlying_expiry || [];
+  const result = response.result[0]?.underlying_expiry || [];
+  setSessionCache(cacheKey, result);
+  return result;
 }
 
+// Option chain is always fetched fresh — it's updated by WebSocket between polls
 export async function getOptionChain(underlying: string, expiry: string, interval: string = '15'): Promise<OptionChainResponse> {
   return fetchAPI<OptionChainResponse>('/obrest/optionChain/getOptionChain', {
     underlying,
@@ -112,7 +147,12 @@ export async function getClientDetails(): Promise<ClientDetailsResponse> {
 }
 
 export async function getWSSession(_forceRefresh: boolean = false): Promise<WSSession> {
-  // Always fetch fresh profile info to get a valid, unconsumed susertoken
+  // WS session can be cached for a short period (5 minutes)
+  if (!_forceRefresh) {
+    const cached = getSessionCache<WSSession>('wsSession');
+    if (cached) return cached;
+  }
+
   const userRes = await getUser();
   const clientRes = await getClientDetails();
   
@@ -123,10 +163,12 @@ export async function getWSSession(_forceRefresh: boolean = false): Promise<WSSe
     throw new Error('Failed to retrieve session metadata');
   }
 
-  return {
+  const session: WSSession = {
     uid: user.userId || client.userId,
     actid: client.actId || user.userId,
     susertoken: user.key,
-    source: 'API' // Switched back to API as it is more standard for data terminals
+    source: 'API'
   };
+  setSessionCache('wsSession', session);
+  return session;
 }

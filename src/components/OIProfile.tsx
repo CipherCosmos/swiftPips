@@ -133,7 +133,7 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
     );
   };
 
-  const renderMomentum = (s: typeof sortedStrikes[0], idx: number) => {
+  const renderMomentum = (s: typeof sortedStrikes[0], _idx: number) => {
     const oic = analytics.oicValues[strikes.indexOf(s)] || { ce: 0, pe: 0 };
     const ceH = (Math.abs(oic.ce) / analytics.oicAbsMax) * 42;
     const peH = (Math.abs(oic.pe) / analytics.oicAbsMax) * 42;
@@ -200,7 +200,7 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
     );
   };
 
-  const renderNet = (s: typeof sortedStrikes[0], idx: number) => {
+  const renderNet = (s: typeof sortedStrikes[0], _idx: number) => {
     const net = analytics.netOI[strikes.indexOf(s)] || 0;
     const pct = (Math.abs(net) / analytics.netMax) * 45;
     const isBullish = net > 0; // More PUT OI than CALL = support = bullish
@@ -234,7 +234,7 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
     );
   };
 
-  const renderGamma = (s: typeof sortedStrikes[0], idx: number) => {
+  const renderGamma = (s: typeof sortedStrikes[0], _idx: number) => {
     const ge = analytics.gammaExp[strikes.indexOf(s)] || { ce: 0, pe: 0, net: 0 };
     const netPct = (Math.abs(ge.net) / analytics.gammaNetMax) * 45;
     const isBullish = ge.net > 0;

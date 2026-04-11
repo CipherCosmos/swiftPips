@@ -373,7 +373,10 @@ function App() {
                       strikes={optionChain.strikes}
                       atmStrike={atmStrike}
                       selectedStrike={selectedStrike}
-                      onSelectStrike={setSelectedStrike}
+                      onSelectStrike={(strike, type) => {
+                        setSelectedStrike(strike);
+                        if (type) setSelectedOptionType(type);
+                      }}
                       isReversed={isReversed}
                       strikeDepth={strikeDepth}
                       spotPrice={optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP}

@@ -6,7 +6,7 @@ interface OptionChainProps {
   strikes: StrikeData[];
   atmStrike: number | null;
   selectedStrike: number | null;
-  onSelectStrike: (strike: number) => void;
+  onSelectStrike: (strike: number, type?: 'CE' | 'PE') => void;
   isReversed: boolean;
   strikeDepth: number;
   spotPrice: number;
@@ -239,7 +239,16 @@ export function OptionChain({
               <tr
                 key={s.strike_price}
                 ref={isATM ? atmRowRef : null}
-                onClick={() => onSelectStrike(s.strike_price)}
+                onClick={(e) => {
+                  const td = (e.target as Element).closest('td');
+                  if (td) {
+                    if (td.cellIndex < 6) onSelectStrike(s.strike_price, 'CE');
+                    else if (td.cellIndex > 6) onSelectStrike(s.strike_price, 'PE');
+                    else onSelectStrike(s.strike_price);
+                  } else {
+                    onSelectStrike(s.strike_price);
+                  }
+                }}
                 data-atm={isATM}
                 className={`group cursor-pointer transition-all relative
                   ${isSelected ? 'active-row bg-emerald-500/[0.06]' : 'hover:bg-white/[0.03]'}

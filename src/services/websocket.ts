@@ -7,7 +7,7 @@ class NorenWebSocket {
   private session: WSSession | null = null;
   private listeners: Map<string, Set<TickListener>> = new Map();
   private isConnected = false;
-  private url = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/NorenWS`;
+  private url = import.meta.env.DEV ? `ws://${window.location.host}/NorenWS` : 'wss://ws2.aliceblueonline.com/NorenWS/';
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private heartbeatInterval: number | null = null;

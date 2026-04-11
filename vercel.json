@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/obrest/:path*",
+      "destination": "https://ant.aliceblueonline.com/obrest/:path*"
+    },
+    {
+      "source": "/omk/:path*",
+      "destination": "https://ant.aliceblueonline.com/omk/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

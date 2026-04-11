@@ -99,7 +99,7 @@ export function OptionChain({
     }
   }, [atmStrike, strikes.length]);
 
-  const getCellStyle = (strike: number, val: number, side: 'CE' | 'PE', metric: 'vol' | 'oi' | 'oic') => {
+  const getCellStyle = (strike: number, _val: number, side: 'CE' | 'PE', metric: 'vol' | 'oi' | 'oic') => {
     if (!analytics) return '';
     const data = side === 'CE' ? analytics.ce[metric] : analytics.pe[metric];
 

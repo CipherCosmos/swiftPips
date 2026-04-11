@@ -77,11 +77,7 @@ function App() {
 
   if (!tokenSet) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Background Decorative Elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
-        
+      <div className="min-h-screen border-t-[3px] border-emerald-500/20 bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
         <div className="glass-card p-10 max-w-md w-full relative z-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-extrabold tracking-tight mb-2">
@@ -122,13 +118,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-200 relative">
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-15%] right-[-5%] w-[50%] h-[50%] bg-emerald-900/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-15%] left-[-5%] w-[50%] h-[50%] bg-cyan-900/10 rounded-full blur-[150px]" />
-      </div>
-
+    <div className="min-h-screen border-t-[3px] border-white/10 bg-[#020617] text-slate-200 relative">
       <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -230,7 +220,6 @@ function App() {
 
             {optionChain && (
               <div className="glass-card p-5 overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
                 <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Underlying Snapshot</h3>
                 <div className="grid grid-cols-2 gap-4 relative z-10">
                   <div className="space-y-1">

@@ -130,7 +130,7 @@ export function PositionCalculator({
                 <button key={type} onClick={() => setSelectedOptionType(type)}
                   className={`px-3 py-1 rounded-md text-[10px] font-black transition-all
                     ${selectedOptionType === type
-                      ? (type === 'CE' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/40' : 'bg-rose-500 text-white shadow-lg shadow-rose-900/40')
+                      ? (type === 'CE' ? 'bg-rose-500 text-white' : 'bg-emerald-600 text-white')
                       : 'text-slate-500 hover:text-slate-300'}`}
                 >{type}</button>
               ))}
@@ -172,17 +172,17 @@ export function PositionCalculator({
 
           {/* Greeks */}
           <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/5">
-            <div className="bg-slate-900/60 rounded p-1.5 text-center border border-white/5">
-              <span className="block text-[7px] text-blue-400 uppercase font-bold">Δ Delta</span>
+            <div className="bg-[#0B0E14] rounded p-1.5 text-center border border-white/5">
+              <span className="block text-[7px] text-slate-400 uppercase font-bold">Δ Delta</span>
               <span className="text-sm font-mono font-black text-white">{greeks.delta.toFixed(2)}</span>
             </div>
-            <div className="bg-slate-900/60 rounded p-1.5 text-center border border-fuchsia-500/10">
-              <span className="block text-[7px] text-fuchsia-400 uppercase font-bold">Γ Gamma</span>
-              <span className="text-sm font-mono font-black text-fuchsia-300">{greeks.gamma.toFixed(4)}</span>
+            <div className="bg-[#0B0E14] rounded p-1.5 text-center border border-white/5">
+              <span className="block text-[7px] text-slate-400 uppercase font-bold">Γ Gamma</span>
+              <span className="text-sm font-mono font-black text-slate-300">{greeks.gamma.toFixed(4)}</span>
             </div>
-            <div className="bg-slate-900/60 rounded p-1.5 text-center border border-rose-500/10">
-              <span className="block text-[7px] text-rose-400 uppercase font-bold">Θ Theta</span>
-              <span className="text-sm font-mono font-black text-rose-400">{greeks.theta.toFixed(2)}</span>
+            <div className="bg-[#0B0E14] rounded p-1.5 text-center border border-white/5">
+              <span className="block text-[7px] text-slate-400 uppercase font-bold">Θ Theta</span>
+              <span className="text-sm font-mono font-black text-slate-400">{greeks.theta.toFixed(2)}</span>
             </div>
           </div>
 
@@ -275,7 +275,7 @@ export function PositionCalculator({
               </div>
               <div className="relative group">
                 <input type="number" value={spotSL} onChange={(e) => setSpotSL(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-slate-900 border border-white/5 group-hover:border-rose-500/30 transition-colors rounded-xl px-3 py-2 text-lg font-mono font-black text-rose-400 focus:outline-none focus:border-rose-500/50 text-left" />
+                  className="w-full bg-[#0B0E14] border border-white/10 group-hover:border-white/20 transition-colors rounded px-3 py-2 text-lg font-mono font-black text-white focus:outline-none focus:border-rose-500/50 text-left" />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-slate-600 font-bold uppercase">spot pts</div>
               </div>
               <div className="bg-rose-500/[0.04] border border-rose-500/10 rounded-lg p-2 space-y-0.5">
@@ -311,7 +311,7 @@ export function PositionCalculator({
               </div>
               <div className="relative group">
                 <input type="number" value={spotTarget} onChange={(e) => setSpotTarget(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-slate-900 border border-white/5 group-hover:border-emerald-500/30 transition-colors rounded-xl px-3 py-2 text-lg font-mono font-black text-emerald-400 focus:outline-none focus:border-emerald-500/50 text-left" />
+                  className="w-full bg-[#0B0E14] border border-white/10 group-hover:border-white/20 transition-colors rounded px-3 py-2 text-lg font-mono font-black text-white focus:outline-none focus:border-emerald-500/50 text-left" />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-slate-600 font-bold uppercase">spot pts</div>
               </div>
               <div className="bg-emerald-500/[0.04] border border-emerald-500/10 rounded-lg p-2 space-y-0.5">
@@ -338,10 +338,10 @@ export function PositionCalculator({
               <span className="text-slate-500">P&L Spectrum</span>
               <span>+₹{totalMaxProfit.toLocaleString()}</span>
             </div>
-            <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-white/5 flex">
-              <div className="h-full bg-gradient-to-r from-rose-600 to-rose-400 transition-all duration-500"
+            <div className="w-full h-3 bg-[#0B0E14] rounded-full overflow-hidden border border-white/5 flex">
+              <div className="h-full bg-rose-500/60 transition-all duration-500"
                 style={{ width: `${Math.min(50, (totalMaxLoss / (totalMaxLoss + totalMaxProfit)) * 100 || 50)}%` }} />
-              <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500 flex-1" />
+              <div className="h-full bg-emerald-500/60 transition-all duration-500 flex-1" />
             </div>
           </div>
 
@@ -397,14 +397,12 @@ export function PositionCalculator({
             </span>
           </div>
 
-          {/* Buy Lots Hero */}
           <div className="text-center space-y-2">
             <div className="relative inline-block mx-auto group">
-              <div className="absolute -inset-1 bg-emerald-500 rounded-2xl blur opacity-20 group-hover:opacity-35 transition-opacity" />
-              <div className="relative px-9 py-3 rounded-2xl bg-emerald-500 border border-emerald-400/20">
-                <div className="text-emerald-100 text-[7px] uppercase font-black tracking-[0.2em] opacity-80">Buy Lots</div>
+              <div className="relative px-9 py-3 rounded border border-white/10 bg-[#0B0E14] group-hover:border-white/20 transition-all">
+                <div className="text-slate-400 text-[7px] uppercase font-black tracking-[0.2em]">Buy Lots</div>
                 <div className="text-4xl font-black text-white tracking-tighter leading-none">{lots}</div>
-                <div className="text-emerald-200/60 text-[8px] font-bold mt-0.5">{totalQty} qty × ₹{lp.toFixed(1)}</div>
+                <div className="text-slate-500 text-[8px] font-bold mt-0.5">{totalQty} qty × ₹{lp.toFixed(1)}</div>
               </div>
             </div>
           </div>
@@ -415,9 +413,9 @@ export function PositionCalculator({
               <span className="text-slate-500">Premium</span>
               <span className="text-emerald-400 font-mono text-xs">₹{stats?.totalPremium.toLocaleString() || 0}</span>
             </div>
-            <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-white/5">
+            <div className="w-full h-1.5 bg-[#0B0E14] rounded-full overflow-hidden border border-white/5">
               <div
-                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700 ease-out shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                className="h-full bg-slate-300 transition-all duration-700 ease-out"
                 style={{ width: `${Math.min(100, ((stats?.totalPremium || 0) / capital) * 100)}%` }}
               />
             </div>

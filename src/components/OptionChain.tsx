@@ -127,21 +127,21 @@ export function OptionChain({
         <thead className="sticky top-0 z-30">
           <tr className="bg-[#0f172a] border-b border-white/10 shadow-xl text-slate-500 uppercase tracking-widest text-[8px]">
             {/* CE Side */}
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-blue-400">Δ</th>
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-fuchsia-400">Γ</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-slate-400">Δ</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-slate-400">Γ</th>
             <th className="px-1 py-3.5 text-center border-r border-white/5 w-14">OI</th>
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-14 text-yellow-400">OIC</th>
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-12">Vol</th>
-            <th className="px-3 py-3.5 text-right border-r-2 border-rose-500/20 w-20">CE LTP</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-14 text-slate-400">OIC</th>
+            <th className="px-1 py-3.5 text-center border-r border-white/5 w-12 text-slate-400">Vol</th>
+            <th className="px-3 py-3.5 text-right border-r-2 border-white/10 w-20">CE LTP</th>
             {/* Strike */}
-            <th className="px-3 py-3.5 text-center bg-[#020617] w-24 text-emerald-500 border-x border-white/5">Strike</th>
+            <th className="px-3 py-3.5 text-center bg-[#0B0E14] w-24 text-slate-300 border-x border-white/5">Strike</th>
             {/* PE Side */}
-            <th className="px-3 py-3.5 text-left border-l-2 border-emerald-500/20 w-20">PE LTP</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-12">Vol</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-14 text-yellow-400">OIC</th>
+            <th className="px-3 py-3.5 text-left border-l-2 border-white/10 w-20">PE LTP</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-12 text-slate-400">Vol</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-14 text-slate-400">OIC</th>
             <th className="px-1 py-3.5 text-center border-l border-white/5 w-14">OI</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-fuchsia-400">Γ</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-blue-400">Δ</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-slate-400">Γ</th>
+            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-slate-400">Δ</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.03]">
@@ -168,7 +168,7 @@ export function OptionChain({
               const max = side === 'CE' ? analytics.ce.oi.max : analytics.pe.oi.max;
               const pct = (val / max) * 100;
               const barW = getOIBarWidth(val);
-              const barColor = side === 'CE' ? 'bg-rose-500/10' : 'bg-emerald-500/10';
+              const barColor = 'bg-white/[0.04]'; // monochromatic bar
 
               return (
                 <div
@@ -192,8 +192,8 @@ export function OptionChain({
               const isSignal = (side === 'CE' && ceShortCovering) || (side === 'PE' && peLongUnwinding);
               const signalClass = isSignal
                 ? side === 'CE'
-                  ? 'text-emerald-400 font-black' // CE short covering = bullish
-                  : 'text-rose-400 font-black'    // PE long unwinding = bearish
+                  ? 'text-emerald-400 font-bold' // CE short covering = bullish
+                  : 'text-rose-400 font-bold'    // PE long unwinding = bearish
                 : 'text-slate-300';
 
               return (
@@ -220,7 +220,7 @@ export function OptionChain({
                 <div className="flex flex-col items-center justify-center h-full w-full py-1.5"
                   title={`Vol: ${val.toLocaleString()} | ${pct.toFixed(1)}%`}>
                   <span className="font-bold text-[10px] text-slate-200" style={{ opacity: 0.4 + intensity * 0.6 }}>{(val / 1000).toFixed(0)}k</span>
-                  {pct > 80 && <span className="text-[8px] text-amber-500 font-bold tracking-tighter">HOT</span>}
+                  {pct > 80 && <span className="text-[8px] text-slate-100 font-bold tracking-tighter">HOT</span>}
                 </div>
               );
             };
@@ -257,10 +257,10 @@ export function OptionChain({
               >
                 {/* CE Delta */}
                 <td className="px-1 py-2 border-r border-white/5 text-center">
-                  <div className={`text-[10px] font-bold ${ceGreeks.delta > 0.7 ? 'text-emerald-400' : ceGreeks.delta > 0.4 ? 'text-blue-400' : 'text-slate-400'}`}>{ceGreeks.delta.toFixed(2)}</div>
+                  <div className={`text-[10px] font-bold ${ceGreeks.delta > 0.7 ? 'text-slate-100' : ceGreeks.delta > 0.4 ? 'text-slate-300' : 'text-slate-500'}`}>{ceGreeks.delta.toFixed(2)}</div>
                 </td>
                 {/* CE Gamma */}
-                <td className="px-1 py-2 text-center border-r border-white/5 text-fuchsia-400/70 text-[9px]">{ceGreeks.gamma.toFixed(4)}</td>
+                <td className="px-1 py-2 text-center border-r border-white/5 text-slate-400 text-[9px]">{ceGreeks.gamma.toFixed(4)}</td>
                 {/* CE OI */}
                 <td className="p-0 text-center border-r border-white/5">{formatOI(s.ce_oi, 'CE')}</td>
                 {/* CE OIC */}
@@ -268,15 +268,15 @@ export function OptionChain({
                 {/* CE Vol */}
                 <td className="p-0 text-center border-r border-white/5">{formatVol(s.ce_v, 'CE')}</td>
                 {/* CE LTP */}
-                <td className={`px-3 py-2.5 text-right border-r-2 border-rose-500/20 font-bold tabular-nums ${isITM_CE ? 'text-emerald-400 bg-emerald-500/[0.04]' : 'text-slate-500'}`}>
+                <td className={`px-3 py-2.5 text-right border-r-2 border-white/10 font-bold tabular-nums ${isITM_CE ? 'text-emerald-400 bg-emerald-500/[0.04]' : 'text-slate-300'}`}>
                   ₹{s.ce_ltp.toFixed(2)}
                 </td>
 
                 {/* STRIKE */}
-                <td className="px-3 py-2.5 text-center font-black bg-[#020617] border-x border-white/5">
-                  <div className={`py-1 rounded-lg border transition-all ${
-                    isSelected ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                    : isATM ? 'border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
+                <td className="px-3 py-2.5 text-center font-black bg-[#0B0E14] border-x border-white/5">
+                  <div className={`py-1 rounded border transition-all ${
+                    isSelected ? 'border-white/30 bg-white/10 text-white'
+                    : isATM ? 'border-white/10 text-white bg-white/5'
                     : 'border-transparent text-slate-400'}`}>
                     <span className="text-xs">{s.strike_price.toLocaleString()}</span>
                     {isATM && <span className="text-[6px] font-black uppercase block mt-0.5 text-amber-500">ATM</span>}
@@ -285,7 +285,7 @@ export function OptionChain({
                 </td>
 
                 {/* PE LTP */}
-                <td className={`px-3 py-2.5 text-left border-l-2 border-emerald-500/20 font-bold tabular-nums ${isITM_PE ? 'text-rose-400 bg-rose-500/[0.04]' : 'text-slate-500'}`}>
+                <td className={`px-3 py-2.5 text-left border-l-2 border-white/10 font-bold tabular-nums ${isITM_PE ? 'text-rose-400 bg-rose-500/[0.04]' : 'text-slate-300'}`}>
                   ₹{s.pe_ltp.toFixed(2)}
                 </td>
                 {/* PE Vol */}
@@ -295,10 +295,10 @@ export function OptionChain({
                 {/* PE OI */}
                 <td className="p-0 text-center border-l border-white/5">{formatOI(s.pe_oi, 'PE')}</td>
                 {/* PE Gamma */}
-                <td className="px-1 py-2 text-center border-l border-white/5 text-fuchsia-400/70 text-[9px]">{peGreeks.gamma.toFixed(4)}</td>
+                <td className="px-1 py-2 text-center border-l border-white/5 text-slate-400 text-[9px]">{peGreeks.gamma.toFixed(4)}</td>
                 {/* PE Delta */}
                 <td className="px-1 py-2 border-l border-white/5 text-center">
-                  <div className={`text-[10px] font-bold ${Math.abs(peGreeks.delta) > 0.7 ? 'text-rose-400' : Math.abs(peGreeks.delta) > 0.4 ? 'text-blue-400' : 'text-slate-400'}`}>{peGreeks.delta.toFixed(2)}</div>
+                  <div className={`text-[10px] font-bold ${Math.abs(peGreeks.delta) > 0.7 ? 'text-slate-100' : Math.abs(peGreeks.delta) > 0.4 ? 'text-slate-300' : 'text-slate-500'}`}>{peGreeks.delta.toFixed(2)}</div>
                 </td>
               </tr>
             );

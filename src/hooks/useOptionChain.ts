@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getUnderlyings, getExpiries, getOptionChain, loadAuthToken } from '../services/api';
-import type { OptionChainData, StrikeData } from '../types/api';
+import { norenWS } from '../services/websocket';
+import type { OptionChainData, StrikeData, TickData } from '../types/api';
 
 export function useOptionChain() {
   const [underlyings, setUnderlyings] = useState<string[]>([]);
@@ -14,7 +15,8 @@ export function useOptionChain() {
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState<number | null>(null);
-
+  
+  const currentTokensRef = useRef<string[]>([]);
   const fetchUnderlyings = useCallback(async () => {
     try {
       setError(null);
@@ -48,6 +50,35 @@ export function useOptionChain() {
     }
   }, []);
 
+  const handleTick = useCallback((tick: TickData) => {
+    setOptionChain(prev => {
+      if (!prev) return null;
+      
+      const newStrikes = prev.strikes.map(s => {
+        const isCE = s.ce_token === tick.tk;
+        const isPE = s.pe_token === tick.tk;
+
+        if (!isCE && !isPE) return s;
+
+        const updated = { ...s };
+        if (isCE) {
+          if (tick.lp) updated.ce_ltp = parseFloat(tick.lp);
+          if (tick.oi) updated.ce_oi = parseInt(tick.oi, 10);
+          if (tick.v) updated.ce_v = parseInt(tick.v, 10);
+          if (tick.poi) updated.ce_pdoi = parseInt(tick.poi, 10);
+        } else {
+          if (tick.lp) updated.pe_ltp = parseFloat(tick.lp);
+          if (tick.oi) updated.pe_oi = parseInt(tick.oi, 10);
+          if (tick.v) updated.pe_v = parseInt(tick.v, 10);
+          if (tick.poi) updated.pe_pdoi = parseInt(tick.poi, 10);
+        }
+        return updated;
+      });
+
+      return { ...prev, strikes: newStrikes };
+    });
+  }, []);
+
   const fetchOptionChain = useCallback(async () => {
     if (!selectedUnderlying || !selectedExpiry) return;
     try {
@@ -56,10 +87,6 @@ export function useOptionChain() {
       const response = await getOptionChain(selectedUnderlying, selectedExpiry);
       const result = response.result[0];
       if (result) {
-        console.log('Full Option Chain Result:', result);
-        console.log('First Strike Object Keys:', result.data[0] ? Object.keys(result.data[0]) : 'Empty data');
-        console.log('First Strike Object:', result.data[0]);
-
         const mappedStrikes: StrikeData[] = result.data.map(s => ({
           strike_price: parseFloat(s.strike || s.stk || s.stk_prc || s.strikeprice || s.strikePrice || s.strike_price || '0') || 0,
           ce_ltp: parseFloat(s.CE?.ltp || '0') || 0,
@@ -70,6 +97,8 @@ export function useOptionChain() {
           pe_v: parseInt(s.PE?.v || '0', 10) || 0,
           ce_pdoi: parseInt(s.CE?.pdoi || '0', 10) || 0,
           pe_pdoi: parseInt(s.PE?.pdoi || '0', 10) || 0,
+          ce_token: s.CE?.token,
+          pe_token: s.PE?.token,
         }));
 
         setOptionChain({
@@ -81,13 +110,33 @@ export function useOptionChain() {
           lotsize: parseInt(result.lotsize, 10) || 0,
           pcr: parseFloat(result.pcr) || 0,
         });
+
+        // WebSocket Subscriptions
+        const newTokens = mappedStrikes.flatMap(s => [s.ce_token, s.pe_token].filter(Boolean) as string[]);
+        
+        // Unsubscribe from old tokens
+        if (currentTokensRef.current.length > 0) {
+          norenWS.unsubscribe(currentTokensRef.current, handleTick);
+        }
+        
+        // Subscribe to new tokens
+        norenWS.subscribe(newTokens, handleTick);
+        currentTokensRef.current = newTokens;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch option chain');
     } finally {
       setLoading(false);
     }
-  }, [selectedUnderlying, selectedExpiry]);
+  }, [selectedUnderlying, selectedExpiry, handleTick]);
+
+  useEffect(() => {
+    return () => {
+      if (currentTokensRef.current.length > 0) {
+        norenWS.unsubscribe(currentTokensRef.current, handleTick);
+      }
+    };
+  }, [handleTick]);
 
   useEffect(() => {
     if (loadAuthToken()) {

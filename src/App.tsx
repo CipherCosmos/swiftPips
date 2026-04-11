@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { OptionChain } from './components/OptionChain';
 import { PositionCalculator } from './components/PositionCalculator';
 import { useOptionChain } from './hooks/useOptionChain';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { setAuthToken, loadAuthToken } from './services/api';
+import { setAuthToken, loadAuthToken, getWSSession } from './services/api';
+import { norenWS } from './services/websocket';
 
 function App() {
   const [capital, setCapital] = useLocalStorage('trading_capital', 100000);
@@ -12,6 +13,7 @@ function App() {
   const [stopLoss, setStopLoss] = useState<number>(0);
   const [tokenInput, setTokenInput] = useState('');
   const [tokenSet, setTokenSet] = useState(!!loadAuthToken());
+  const [wsStatus, setWsStatus] = useState<'offline' | 'connecting' | 'live' | 'error'>('offline');
 
   const {
     underlyings,
@@ -31,16 +33,42 @@ function App() {
     onAutoRefreshChange,
     refresh,
     findATMStrike,
-  } = useOptionChain() as any; // Temporary cast to handle dynamic props if needed
+  } = useOptionChain() as any;
 
   const atmStrike = useMemo(() => findATMStrike(), [findATMStrike, optionChain]);
+
+  // Handle WebSocket Connection
+  const initWS = async (force: boolean = false) => {
+    try {
+      setWsStatus('connecting');
+      if (force) {
+        norenWS.disconnect();
+      }
+      const session = await getWSSession(force);
+      await norenWS.connect(session);
+      setWsStatus('live');
+    } catch (err) {
+      console.error('WS Init Error:', err);
+      setWsStatus('error');
+    }
+  };
+
+  useEffect(() => {
+    if (tokenSet && wsStatus === 'offline') {
+      initWS();
+    }
+  }, [tokenSet, wsStatus]);
 
   const handleTokenSubmit = () => {
     if (tokenInput.trim()) {
       setAuthToken(tokenInput.trim());
       setTokenSet(true);
-      // Data will be fetched by useOptionChain useEffect automatically
+      setWsStatus('offline'); // Trigger reconnection
     }
+  };
+
+  const handleResync = () => {
+    initWS(true);
   };
 
   if (!tokenSet) {
@@ -79,7 +107,9 @@ function App() {
             
             <div className="flex items-center gap-2 justify-center py-4 border-t border-white/5">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-slate-500 text-xs">Awaiting primary authentication</span>
+              <span className="text-slate-500 text-xs text-center">
+                Fetching session metadata & establishing live feed...
+              </span>
             </div>
           </div>
         </div>
@@ -101,9 +131,29 @@ function App() {
             <h1 className="text-3xl font-black tracking-tighter">
               <span className="text-gradient">SWIFTPIPS</span>
             </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-xs text-slate-500 font-bold uppercase tracking-widest leading-none">Terminal Active</span>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  wsStatus === 'live' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
+                  wsStatus === 'connecting' ? 'bg-amber-500 animate-pulse' : 
+                  'bg-rose-500'
+                }`} />
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
+                  {wsStatus === 'live' ? 'Market Live' : wsStatus === 'connecting' ? 'Syncing Feed' : 'Feed Offline'}
+                </span>
+              </div>
+              
+              {wsStatus !== 'live' && (
+                <button 
+                  onClick={handleResync}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400 uppercase tracking-tight hover:bg-emerald-500/20 transition-all active:scale-95"
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Re-Sync
+                </button>
+              )}
             </div>
           </div>
           

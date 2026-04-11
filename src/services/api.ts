@@ -1,4 +1,4 @@
-import type { OptionChainResponse, UnderlyingResponse, ExpiryResponse } from '../types/api';
+import type { OptionChainResponse, UnderlyingResponse, ExpiryResponse, UserResponse, ClientDetailsResponse, WSSession } from '../types/api';
 
 const BASE_URL = '';
 
@@ -30,16 +30,16 @@ export function loadAuthToken(): string | null {
   return authToken;
 }
 
-async function fetchAPI<T>(path: string, payload: object): Promise<T> {
+async function fetchAPI<T>(path: string, payload: object = {}, method: 'GET' | 'POST' = 'POST'): Promise<T> {
   const token = loadAuthToken();
   if (!token) {
     throw new Error('Authentication token not set');
   }
 
-  console.log('Using token starting with:', token.substring(0, 15) + '...');
+  console.log(`Using ${method} for ${path}`);
 
   const response = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
+    method,
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -51,7 +51,7 @@ async function fetchAPI<T>(path: string, payload: object): Promise<T> {
       'Sec-Fetch-Mode': 'cors',
       'Sec-Fetch-Site': 'same-origin',
     },
-    body: JSON.stringify(payload),
+    body: method === 'POST' ? JSON.stringify(payload) : undefined,
     credentials: 'include',
   });
 
@@ -101,4 +101,32 @@ export async function getPositions(): Promise<unknown> {
 
 export async function getOrderHistory(): Promise<unknown> {
   return fetchAPI<unknown>('/omk/ho-rest/orderHistory', {});
+}
+
+export async function getUser(): Promise<UserResponse> {
+  return fetchAPI<UserResponse>('/omk/client-rest/profile/getUser', {}, 'GET');
+}
+
+export async function getClientDetails(): Promise<ClientDetailsResponse> {
+  return fetchAPI<ClientDetailsResponse>('/omk/client-rest/profile/getclientdetails', {}, 'GET');
+}
+
+export async function getWSSession(forceRefresh: boolean = false): Promise<WSSession> {
+  // Always fetch fresh profile info to get a valid, unconsumed susertoken
+  const userRes = await getUser();
+  const clientRes = await getClientDetails();
+  
+  const user = userRes.result[0];
+  const client = clientRes.result[0];
+  
+  if (!user || !client) {
+    throw new Error('Failed to retrieve session metadata');
+  }
+
+  return {
+    uid: user.userId || client.userId,
+    actid: client.actId || user.userId,
+    susertoken: user.key,
+    source: 'API' // Switched back to API as it is more standard for data terminals
+  };
 }

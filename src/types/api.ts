@@ -19,6 +19,8 @@ export interface StrikeData {
   pe_v: number;
   ce_pdoi: number;
   pe_pdoi: number;
+  ce_token?: string;
+  pe_token?: string;
   ce_iv?: number;
   pe_iv?: number;
 }
@@ -35,12 +37,14 @@ export interface RawStrikeData {
     oi: string;
     v?: string;
     pdoi?: string;
+    token?: string;
   };
   PE?: {
     ltp: string;
     oi: string;
     v?: string;
     pdoi?: string;
+    token?: string;
   };
 }
 
@@ -79,10 +83,43 @@ export interface OptionChainData {
   pcr: number;
 }
 
+export interface UserResponse {
+  status: string;
+  result: Array<{
+    userId: string;
+    key: string;
+  }>;
+}
+
+export interface ClientDetailsResponse {
+  status: string;
+  result: Array<{
+    userId: string;
+    actId: string;
+    clientName: string;
+  }>;
+}
+
 export interface PositionSize {
   maxRiskAmount: number;
   positionLots: number;
   totalPremium: number;
   breakeven: number;
   riskReward: number;
+}
+
+export interface WSSession {
+  uid: string;
+  actid: string;
+  susertoken: string;
+  source: string;
+}
+
+export interface TickData {
+  tk: string;   // Token
+  lp?: string;  // Last Price
+  oi?: string;  // Open Interest
+  v?: string;   // Volume
+  poi?: string; // Previous OI
+  pc?: string;  // Perc Change
 }

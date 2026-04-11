@@ -4,12 +4,25 @@ import type { OptionChainData } from '../types/api';
 interface OIProfileProps {
   data: OptionChainData;
   isReversed: boolean;
+  strikeDepth: number;
+  atmStrike: number | null;
 }
 
 type ProfileMode = 'walls' | 'momentum' | 'net' | 'gamma';
 
-export function OIProfile({ data, isReversed }: OIProfileProps) {
-  const { strikes, spotLTP } = data;
+export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfileProps) {
+  const { strikes: rawStrikes, spotLTP } = data;
+
+  const strikes = useMemo(() => {
+    if (!atmStrike) return rawStrikes;
+    const atmIndex = rawStrikes.findIndex(s => s.strike_price === atmStrike);
+    if (atmIndex === -1) return rawStrikes;
+
+    const start = Math.max(0, atmIndex - strikeDepth);
+    const end = Math.min(rawStrikes.length, atmIndex + strikeDepth + 1);
+    
+    return rawStrikes.slice(start, end);
+  }, [rawStrikes, atmStrike, strikeDepth]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<ProfileMode>('walls');
 

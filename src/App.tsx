@@ -383,6 +383,8 @@ function App() {
                     <OIProfile 
                       data={optionChain}
                       isReversed={isReversed}
+                      strikeDepth={strikeDepth}
+                      atmStrike={atmStrike}
                     />
                   )
                 ) : (

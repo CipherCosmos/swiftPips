@@ -1,3 +1,6 @@
+import { useEffect, useRef } from 'react';
+import { SearchableCombobox } from './SearchableCombobox';
+
 interface HeaderProps {
   underlyings: string[];
   selectedUnderlying: string;
@@ -21,35 +24,49 @@ export function Header({
   onAutoRefreshChange,
   onRefresh,
 }: HeaderProps) {
+  const symbolInputRef = useRef<HTMLInputElement>(null);
+
+  // Global "TradingView-like" shortcut for instantly typing a symbol
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is already typing in an input or textarea
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
+      ) {
+        return;
+      }
+
+      // If user typing alphanumeric characters without modifiers, auto focus symbol search
+      if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (symbolInputRef.current) {
+          symbolInputRef.current.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-slate-400 text-[10px] font-bold uppercase mb-2 tracking-widest">Select Symbol</label>
-        <select
-          value={selectedUnderlying}
-          onChange={(e) => onUnderlyingChange(e.target.value)}
-          className="w-full glass-input rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-        >
-          {underlyings.map((u) => (
-            <option key={u} value={u} className="bg-slate-900">{u}</option>
-          ))}
-        </select>
-      </div>
+      <SearchableCombobox
+        label="Select Symbol"
+        options={underlyings}
+        value={selectedUnderlying}
+        onChange={onUnderlyingChange}
+        placeholder="Type to search symbol..."
+        autoFocusRef={symbolInputRef}
+      />
 
-      <div>
-        <label className="block text-slate-400 text-[10px] font-bold uppercase mb-2 tracking-widest">Expiration</label>
-        <select
-          value={selectedExpiry}
-          onChange={(e) => onExpiryChange(e.target.value)}
-          className="w-full glass-input rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-        >
-          {expiries.map((expiry) => (
-            <option key={expiry} value={expiry} className="bg-slate-900">
-              {expiry}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SearchableCombobox
+        label="Expiration"
+        options={expiries}
+        value={selectedExpiry}
+        onChange={onExpiryChange}
+        placeholder="Type to search expiry..."
+      />
 
       <div className="flex items-center justify-between pt-2">
         <label className="flex items-center gap-3 cursor-pointer group">

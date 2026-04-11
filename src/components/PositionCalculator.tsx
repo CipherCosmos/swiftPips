@@ -87,6 +87,9 @@ export function PositionCalculator({
     return calculateBreakeven(selectedStrike, lp, selectedOptionType);
   }, [selectedStrike, lp, selectedOptionType]);
 
+  // Use breakeven in the display
+  void breakeven;
+
   return (
     <div className="glass-card overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-white/5">

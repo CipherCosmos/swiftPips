@@ -100,20 +100,57 @@ export function useOptionChain(depth: number = 15) {
           return '0';
         };
 
+        const logOI = (...values: number[]) => console.log('OI values sample:', values.slice(0, 4));
+        
         const mappedStrikes: StrikeData[] = result.data.map(s => {
           const ceRaw = (s as any).CE || {};
           const peRaw = (s as any).PE || {};
           
+          const getStrikePrice = () => {
+            const val = String(s.strike || s.stk || s.stk_prc || s.strikeprice || s.strikePrice || s.strike_price || '0');
+            return parseFloat(val) || 0;
+          };
+          
+          const getOI = (raw: any) => {
+            const keys = ['oi', 'toi', 'openinterest', 'tot_oi', 'open_interest', 'total_oi', 'openInt', 'open_interest', 'OI'];
+            for (const key of keys) {
+              const val = raw[key];
+              if (val !== undefined && val !== null && val !== '') {
+                return parseFloat(String(val).replace(/,/g, '')) || 0;
+              }
+            }
+            return 0;
+          };
+          
+          const getPDOI = (raw: any) => {
+            const keys = ['pdoi', 'prev_oi', 'prev_oi_change', 'poi', 'pdc_oi', 'previous_oi', 'prevday_oi'];
+            for (const key of keys) {
+              const val = raw[key];
+              if (val !== undefined && val !== null && val !== '') {
+                return parseFloat(String(val).replace(/,/g, '')) || 0;
+              }
+            }
+            return 0;
+          };
+
+          const ceOI = getOI(ceRaw);
+          const peOI = getOI(peRaw);
+          
+          // Debug first few strikes
+          if (result.data.indexOf(s) < 3) {
+            logOI(ceOI, peOI);
+          }
+
           return {
-            strike_price: parseNum(s.strike || s.stk || s.stk_prc || s.strikeprice || s.strikePrice || s.strike_price || '0'),
+            strike_price: getStrikePrice(),
             ce_ltp: parseNum(ceRaw.ltp || '0'),
             pe_ltp: parseNum(peRaw.ltp || '0'),
-            ce_oi: parseNum(getVal(ceRaw, ['oi', 'toi', 'openinterest', 'tot_oi'])),
-            pe_oi: parseNum(getVal(peRaw, ['oi', 'toi', 'openinterest', 'tot_oi'])),
-            ce_v: parseNum(getVal(ceRaw, ['v', 'vol', 'volume', 'total_vol', 'tv'])),
-            pe_v: parseNum(getVal(peRaw, ['v', 'vol', 'volume', 'total_vol', 'tv'])),
-            ce_pdoi: parseNum(ceRaw.pdoi || '0'),
-            pe_pdoi: parseNum(peRaw.pdoi || '0'),
+            ce_oi: ceOI,
+            pe_oi: peOI,
+            ce_v: parseNum(getVal(ceRaw, ['v', 'vol', 'volume', 'total_vol', 'tv', 'vol'])),
+            pe_v: parseNum(getVal(peRaw, ['v', 'vol', 'volume', 'total_vol', 'tv', 'vol'])),
+            ce_pdoi: getPDOI(ceRaw),
+            pe_pdoi: getPDOI(peRaw),
             ce_token: ceRaw.token,
             pe_token: peRaw.token,
           };

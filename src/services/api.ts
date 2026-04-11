@@ -111,7 +111,7 @@ export async function getClientDetails(): Promise<ClientDetailsResponse> {
   return fetchAPI<ClientDetailsResponse>('/omk/client-rest/profile/getclientdetails', {}, 'GET');
 }
 
-export async function getWSSession(forceRefresh: boolean = false): Promise<WSSession> {
+export async function getWSSession(_forceRefresh: boolean = false): Promise<WSSession> {
   // Always fetch fresh profile info to get a valid, unconsumed susertoken
   const userRes = await getUser();
   const clientRes = await getClientDetails();

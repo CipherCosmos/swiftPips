@@ -10,17 +10,17 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
   const { strikes, spotLTP } = data;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate Max values for scaling using Logarithmic Scale to handle huge ranges
+  // Calculate Max values for scaling
   const maxStats = useMemo(() => {
     const allOI = strikes.flatMap(s => [s.ce_oi, s.pe_oi]).filter(v => v > 0);
-    if (allOI.length === 0) return { maxLogOI: 1 };
+    if (allOI.length === 0) return { maxOI: 1, hasData: false };
     
-    // Using log10 to squash the giants and boost the small strikes
-    const logs = allOI.map(v => Math.log10(v));
-    const maxLog = Math.max(...logs, 1);
+    // Linear scale shows true volume differences
+    const maxVal = allOI.length > 0 ? Math.max(...allOI) : 1;
     
     return {
-      maxLogOI: maxLog,
+      maxOI: maxVal,
+      hasData: true,
     };
   }, [strikes]);
 
@@ -52,8 +52,8 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
   // Auto-scroll to spot price
   useEffect(() => {
     if (containerRef.current && spotPosition !== -1) {
-      const strikeWidth = 80; // Adjusted for wider columns
-      const scrollPos = (spotPosition * strikeWidth) - (containerRef.current.clientWidth / 2) + 40;
+      const strikeWidth = 36; // Adjusted for narrower columns
+      const scrollPos = (spotPosition * strikeWidth) - (containerRef.current.clientWidth / 2) + 18;
       containerRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
     }
   }, [spotPosition]);
@@ -66,8 +66,8 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
             <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Liquidity Concentration</span>
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.4)]" /> <span className="text-[9px] font-bold text-slate-300">PUT OI</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" /> <span className="text-[9px] font-bold text-slate-300">CALL OI</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" /> <span className="text-[9px] font-bold text-slate-300">PUT OI</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.4)]" /> <span className="text-[9px] font-bold text-slate-300">CALL OI</span></div>
                 </div>
             </div>
             <div className="h-8 w-[1px] bg-white/10" />
@@ -79,7 +79,7 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
         
         <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/50 rounded-lg border border-white/5">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Logarithmic Resolution Mode</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Linear Scale Mode</span>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
             {spotPosition !== -1 && (
                 <div 
                     className="absolute top-0 bottom-12 w-[1px] z-30 pointer-events-none transition-all duration-300"
-                    style={{ left: `${spotPosition * 80 + 40}px` }}
+                    style={{ left: `${spotPosition * 36 + 18}px` }}
                 >
                     <div className="h-full bg-emerald-400/20 w-full relative">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-emerald-400 px-2 py-0.5 rounded-sm shadow-[0_0_15px_rgba(52,211,153,0.5)] z-40">
@@ -105,14 +105,11 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
             )}
 
             {/* Bars Grid */}
-            <div className="flex items-end gap-0">
+            <div className="flex items-end gap-0 h-full">
                 {sortedStrikes.map((s) => {
-                    // Logarithmic Scaling for resolution
-                    const ceLog = s.ce_oi > 0 ? Math.log10(s.ce_oi) : 0;
-                    const peLog = s.pe_oi > 0 ? Math.log10(s.pe_oi) : 0;
-                    
-                    const ceOIPct = (ceLog / maxStats.maxLogOI) * 85;
-                    const peOIPct = (peLog / maxStats.maxLogOI) * 85;
+                    // Linear Scaling for accurate representation
+                    const ceOIPct = s.ce_oi > 0 ? (s.ce_oi / maxStats.maxOI) * 85 : 0;
+                    const peOIPct = s.pe_oi > 0 ? (s.pe_oi / maxStats.maxOI) * 85 : 0;
                     
                     const ce_oic = s.ce_oi - s.ce_pdoi;
                     const pe_oic = s.pe_oi - s.pe_pdoi;
@@ -120,46 +117,50 @@ export function OIProfile({ data, isReversed }: OIProfileProps) {
                     const isATM = Math.abs(s.strike_price - spotLTP) < (Math.abs(sortedStrikes[1]?.strike_price - sortedStrikes[0]?.strike_price) || 50);
 
                     return (
-                        <div key={s.strike_price} className="w-[80px] flex flex-col items-center group relative h-full justify-end">
+                        <div key={s.strike_price} className="w-[36px] flex flex-col items-center group relative h-full justify-end hover:z-50">
                             {/* Comparison Cluster container */}
-                            <div className="flex items-end gap-2 px-1 h-full relative">
-                                {/* Put Bar */}
-                                <div className="flex flex-col items-center justify-end h-full w-7 group/put">
-                                    <div className="relative w-full transition-all duration-500 bg-gradient-to-t from-rose-900 via-rose-600 to-rose-500 rounded-t-md group-hover:from-rose-500 group-hover:to-rose-400 shadow-[0_0_20px_rgba(225,29,72,0.15)]" 
-                                         style={{ height: `${Math.max(peOIPct, 12)}%` }}>
-                                         {/* OIC Spike */}
-                                         {pe_oic !== 0 && (
-                                             <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full ${pe_oic > 0 ? 'bg-rose-300 shadow-[0_0_10px_rgba(225,29,72,1)]' : 'bg-rose-950 border border-white/20'}`} />
-                                         )}
-                                    </div>
-                                    <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
-                                        <span className="text-[9px] font-black bg-slate-950 border border-rose-500/50 text-rose-300 px-2 py-1 rounded shadow-2xl">P: {s.pe_oi.toLocaleString()}</span>
+                            <div className="flex items-end gap-[1px] px-0 h-full relative">
+                                {/* Put Bar (Green) */}
+                                <div className="flex flex-col items-center justify-end h-full w-3 group/put relative">
+                                    {s.pe_oi > 0 && (
+                                        <div className="relative w-full transition-all duration-500 bg-gradient-to-t from-emerald-900 via-emerald-600 to-emerald-500 rounded-t-sm group-hover:from-emerald-500 group-hover:to-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
+                                             style={{ height: `${Math.max(peOIPct, 4)}%` }}>
+                                             {/* OIC Spike */}
+                                             {pe_oic !== 0 && (
+                                                 <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${pe_oic > 0 ? 'bg-emerald-300 shadow-[0_0_10px_rgba(16,185,129,1)]' : 'bg-emerald-950 border border-white/20'}`} />
+                                             )}
+                                        </div>
+                                    )}
+                                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+                                        <span className="text-[10px] font-black bg-slate-950 border border-emerald-500/50 text-emerald-300 px-2 py-1 rounded shadow-xl">P: {s.pe_oi.toLocaleString()}</span>
                                     </div>
                                 </div>
 
-                                {/* Call Bar */}
-                                <div className="flex flex-col items-center justify-end h-full w-7 group/call">
-                                    <div className="relative w-full transition-all duration-500 bg-gradient-to-t from-emerald-900 via-emerald-600 to-emerald-500 rounded-t-md group-hover:from-emerald-500 group-hover:to-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]" 
-                                         style={{ height: `${Math.max(ceOIPct, 12)}%` }}>
-                                         {/* OIC Spike */}
-                                         {ce_oic !== 0 && (
-                                             <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full ${ce_oic > 0 ? 'bg-emerald-300 shadow-[0_0_10px_rgba(16,185,129,1)]' : 'bg-emerald-950 border border-white/20'}`} />
-                                         )}
-                                    </div>
-                                    <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
-                                        <span className="text-[9px] font-black bg-slate-950 border border-emerald-500/50 text-emerald-300 px-2 py-1 rounded shadow-2xl">C: {s.ce_oi.toLocaleString()}</span>
+                                {/* Call Bar (Red) */}
+                                <div className="flex flex-col items-center justify-end h-full w-3 group/call relative">
+                                    {s.ce_oi > 0 && (
+                                        <div className="relative w-full transition-all duration-500 bg-gradient-to-t from-rose-900 via-rose-600 to-rose-500 rounded-t-sm group-hover:from-rose-500 group-hover:to-rose-400 shadow-[0_0_15px_rgba(225,29,72,0.15)]" 
+                                             style={{ height: `${Math.max(ceOIPct, 4)}%` }}>
+                                             {/* OIC Spike */}
+                                             {ce_oic !== 0 && (
+                                                 <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${ce_oic > 0 ? 'bg-rose-300 shadow-[0_0_10px_rgba(225,29,72,1)]' : 'bg-rose-950 border border-white/20'}`} />
+                                             )}
+                                        </div>
+                                    )}
+                                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+                                        <span className="text-[10px] font-black bg-slate-950 border border-rose-500/50 text-rose-300 px-2 py-1 rounded shadow-xl">C: {s.ce_oi.toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Strike Label */}
                             <div className={`
-                                mt-6 flex flex-col items-center z-10 
-                                ${isATM ? 'scale-110' : ''} transition-transform
+                                mt-4 flex flex-col items-center z-10 w-full
+                                ${isATM ? 'scale-110' : 'scale-90'} transition-transform
                             `}>
                                 <div className={`
-                                    text-[10px] font-black px-2 py-1 rounded-md border transition-all pointer-events-none
-                                    ${isATM ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-100 shadow-[0_0_15px_rgba(52,211,153,0.4)]' : 'bg-slate-900/80 border-white/5 text-slate-500 group-hover:text-slate-200'}
+                                    text-[9px] font-black px-1 py-0.5 rounded border transition-all whitespace-nowrap
+                                    ${isATM ? 'bg-amber-500/20 border-amber-500/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/95 border-slate-700 text-slate-400 group-hover:text-white group-hover:bg-slate-800'}
                                 `}>
                                     {s.strike_price.toLocaleString()}
                                 </div>

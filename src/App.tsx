@@ -119,7 +119,7 @@ function App() {
 
   return (
     <div className="min-h-screen border-t-[3px] border-white/10 bg-[#020617] text-slate-200 relative">
-      <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
+      <div className="w-full max-w-[1600px] mx-auto px-6 py-6 relative z-10">
         <div className="flex items-end justify-between mb-8">
           <div>
             <h1 className="text-3xl font-black tracking-tighter">
@@ -132,7 +132,7 @@ function App() {
                   wsStatus === 'connecting' ? 'bg-amber-500 animate-pulse' : 
                   'bg-rose-500'
                 }`} />
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-widest leading-none">
                   {wsStatus === 'live' ? 'Market Live' : wsStatus === 'connecting' ? 'Syncing Feed' : 'Feed Offline'}
                 </span>
               </div>
@@ -140,9 +140,9 @@ function App() {
               {wsStatus !== 'live' && (
                 <button 
                   onClick={handleResync}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400 uppercase tracking-tight hover:bg-emerald-500/20 transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase tracking-tight hover:bg-emerald-500/20 transition-all active:scale-95"
                 >
-                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   Re-Sync
@@ -185,13 +185,13 @@ function App() {
 
               <div className="pt-5 border-t border-white/5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Risk Management</h3>
-                  <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-[10px] font-bold text-emerald-500 uppercase">Live</div>
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Risk Management</h3>
+                  <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Live</div>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-slate-400 text-[10px] font-bold uppercase mb-2">Available Capital (₹)</label>
+                    <label className="block text-slate-400 text-xs font-bold uppercase mb-2 tracking-wide">Available Capital (₹)</label>
                     <input
                       type="number"
                       value={capital}
@@ -200,7 +200,7 @@ function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 text-[10px] font-bold uppercase mb-2">Max Risk (%)</label>
+                    <label className="block text-slate-400 text-[11px] font-bold uppercase mb-2 tracking-wide">Max Risk (%)</label>
                     <div className="flex items-center gap-3">
                       <input
                         type="range"
@@ -220,29 +220,29 @@ function App() {
 
             {optionChain && (
               <div className="glass-card p-5 overflow-hidden relative">
-                <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Underlying Snapshot</h3>
+                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-4">Underlying Snapshot</h3>
                 <div className="grid grid-cols-2 gap-4 relative z-10">
                   <div className="space-y-1">
-                    <span className="text-[10px] text-slate-500 uppercase">Spot Price</span>
-                    <div className="text-xl font-mono font-bold text-white shrink-0">
+                    <span className="text-[11px] text-slate-500 uppercase font-bold">Spot Price</span>
+                    <div className="text-2xl font-mono font-black text-white shrink-0">
                       {optionChain.spotLTP.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] text-slate-500 uppercase">Lot Size</span>
-                    <div className="text-xl font-mono font-bold text-white shrink-0">
+                    <span className="text-[11px] text-slate-500 uppercase font-bold">Lot Size</span>
+                    <div className="text-2xl font-mono font-black text-white shrink-0">
                       {optionChain.lotsize}
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] text-slate-500 uppercase">PCR</span>
-                    <div className={`text-xl font-mono font-bold transition-colors ${optionChain.pcr > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <span className="text-[11px] text-slate-500 uppercase font-bold">PCR</span>
+                    <div className={`text-2xl font-mono font-black transition-colors ${optionChain.pcr > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {optionChain.pcr.toFixed(2)}
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] text-slate-500 uppercase">Auto Ref</span>
-                    <div className="text-sm font-bold text-slate-400 mt-1 capitalize">
+                    <span className="text-xs text-slate-500 uppercase font-bold">Auto Ref</span>
+                    <div className="text-sm font-bold text-slate-400 mt-1 capitalize tracking-wide">
                       {autoRefresh ? 'Enabled' : 'Disabled'}
                     </div>
                   </div>
@@ -268,12 +268,12 @@ function App() {
             <div className="glass-card overflow-hidden">
               <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div className="flex items-center gap-6">
-                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Option Chain Terminal</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Option Chain Terminal</h3>
                   
                   <div className="flex items-center gap-2 border-l border-white/10 pl-6">
                     <button
                       onClick={() => setIsReversed(!isReversed)}
-                      className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all ${
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
                         isReversed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500 hover:text-slate-300'
                       }`}
                     >
@@ -288,7 +288,7 @@ function App() {
                         <button
                           key={depth}
                           onClick={() => setStrikeDepth(depth)}
-                          className={`px-2 py-1 rounded text-[9px] font-bold transition-all ${
+                          className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
                             strikeDepth === depth ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 hover:text-slate-300'
                           }`}
                         >

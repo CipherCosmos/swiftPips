@@ -124,13 +124,13 @@ export function PositionCalculator({
         {/* ─── Col 1: Active Leg + Market Intelligence (3 cols) ─── */}
         <div className="p-4 space-y-3 bg-emerald-500/[0.02] lg:col-span-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Leg</h3>
-            <div className="flex bg-slate-900 rounded-lg p-0.5 border border-white/5">
+            <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Active Leg</h3>
+            <div className="flex bg-slate-900 rounded-lg p-1 border border-white/10">
               {(['CE', 'PE'] as const).map((type) => (
                 <button key={type} onClick={() => setSelectedOptionType(type)}
-                  className={`px-3 py-1 rounded-md text-[10px] font-black transition-all
+                  className={`px-4 py-1.5 rounded-md text-xs font-black transition-all
                     ${selectedOptionType === type
-                      ? (type === 'CE' ? 'bg-rose-500 text-white' : 'bg-emerald-600 text-white')
+                      ? (type === 'CE' ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40')
                       : 'text-slate-500 hover:text-slate-300'}`}
                 >{type}</button>
               ))}
@@ -140,56 +140,56 @@ export function PositionCalculator({
           {/* Strike + Premium */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <div className="text-[8px] text-slate-600 uppercase font-bold tracking-wider">Strike</div>
-              <div className="text-lg font-black text-white leading-tight">{selectedStrike?.toLocaleString() || '---'}</div>
+              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Strike</div>
+              <div className="text-2xl font-black text-white leading-tight">{selectedStrike?.toLocaleString() || '---'}</div>
             </div>
             <div>
-              <div className="text-[8px] text-slate-600 uppercase font-bold tracking-wider">Premium</div>
-              <div className="text-lg font-black text-emerald-400 leading-tight">₹{lp.toFixed(2)}</div>
-              <div className="text-[7px] text-slate-600 font-mono">{premiumPct.toFixed(2)}% of strike</div>
+              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Premium</div>
+              <div className="text-2xl font-black text-emerald-400 leading-tight">₹{lp.toFixed(2)}</div>
+              <div className="text-[10px] text-slate-600 font-mono mt-0.5">{premiumPct.toFixed(2)}% of strike</div>
             </div>
           </div>
 
           {/* Key Market Data */}
-          <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-white/5">
+          <div className="grid grid-cols-4 gap-2 pt-3 border-t border-white/5">
             <div className="text-center">
-              <div className="text-[7px] text-slate-600 uppercase font-bold">Spot</div>
-              <div className="text-[11px] font-mono font-bold text-amber-400">{spotDisplay.toLocaleString(undefined, { minimumFractionDigits: 1 })}</div>
+              <div className="text-[9px] text-slate-500 uppercase font-bold mb-1">Spot</div>
+              <div className="text-xs font-mono font-bold text-amber-400">{spotDisplay.toLocaleString(undefined, { minimumFractionDigits: 1 })}</div>
             </div>
             <div className="text-center">
-              <div className="text-[7px] text-slate-600 uppercase font-bold">DTE</div>
-              <div className={`text-[11px] font-mono font-bold ${dte <= 1 ? 'text-rose-400 animate-pulse' : dte <= 3 ? 'text-amber-400' : 'text-slate-300'}`}>{dte}d</div>
+              <div className="text-[9px] text-slate-500 uppercase font-bold mb-1">DTE</div>
+              <div className={`text-xs font-mono font-bold ${dte <= 1 ? 'text-rose-400 animate-pulse' : dte <= 3 ? 'text-amber-400' : 'text-slate-300'}`}>{dte}d</div>
             </div>
             <div className="text-center">
-              <div className="text-[7px] text-slate-600 uppercase font-bold">B/E</div>
-              <div className="text-[11px] font-mono font-bold text-cyan-400">{breakeven.toLocaleString(undefined, { minimumFractionDigits: 0 })}</div>
+              <div className="text-[9px] text-slate-500 uppercase font-bold mb-1">B/E</div>
+              <div className="text-xs font-mono font-bold text-cyan-400">{breakeven.toLocaleString(undefined, { minimumFractionDigits: 0 })}</div>
             </div>
             <div className="text-center">
-              <div className="text-[7px] text-slate-600 uppercase font-bold">To B/E</div>
-              <div className="text-[11px] font-mono font-bold text-cyan-300">{spotToBreakeven.toFixed(0)}pts</div>
+              <div className="text-[9px] text-slate-500 uppercase font-bold mb-1">To B/E</div>
+              <div className="text-xs font-mono font-bold text-cyan-300">{spotToBreakeven.toFixed(0)}pts</div>
             </div>
           </div>
 
           {/* Greeks */}
-          <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/5">
-            <div className="bg-[#0B0E14] rounded p-1.5 text-center border border-white/5">
-              <span className="block text-[7px] text-slate-400 uppercase font-bold">Δ Delta</span>
-              <span className="text-sm font-mono font-black text-white">{greeks.delta.toFixed(2)}</span>
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
+            <div className="bg-[#0B0E14] rounded-lg p-2 text-center border border-white/10 shadow-inner">
+              <span className="block text-[9px] text-slate-500 uppercase font-bold mb-1">Δ Delta</span>
+              <span className="text-base font-mono font-black text-white">{greeks.delta.toFixed(2)}</span>
             </div>
-            <div className="bg-[#0B0E14] rounded p-1.5 text-center border border-white/5">
-              <span className="block text-[7px] text-slate-400 uppercase font-bold">Γ Gamma</span>
-              <span className="text-sm font-mono font-black text-slate-300">{greeks.gamma.toFixed(4)}</span>
+            <div className="bg-[#0B0E14] rounded-lg p-2 text-center border border-white/10 shadow-inner">
+              <span className="block text-[9px] text-slate-500 uppercase font-bold mb-1">Γ Gamma</span>
+              <span className="text-base font-mono font-black text-slate-300">{greeks.gamma.toFixed(4)}</span>
             </div>
-            <div className="bg-[#0B0E14] rounded p-1.5 text-center border border-white/5">
-              <span className="block text-[7px] text-slate-400 uppercase font-bold">Θ Theta</span>
-              <span className="text-sm font-mono font-black text-slate-400">{greeks.theta.toFixed(2)}</span>
+            <div className="bg-[#0B0E14] rounded-lg p-2 text-center border border-white/10 shadow-inner">
+              <span className="block text-[9px] text-slate-500 uppercase font-bold mb-1">Θ Theta</span>
+              <span className="text-base font-mono font-black text-slate-400">{greeks.theta.toFixed(2)}</span>
             </div>
           </div>
 
           {/* OI Context for Selected Strike */}
-          <div className="bg-slate-900/40 rounded-lg p-2 border border-white/5 space-y-1 pt-2">
-            <div className="text-[7px] text-slate-600 uppercase font-bold tracking-wider mb-1">Strike OI Context</div>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px]">
+          <div className="bg-slate-900/40 rounded-lg p-3 border border-white/5 space-y-2 pt-2">
+            <div className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-1">Strike OI Context</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
               <div className="flex justify-between">
                 <span className="text-slate-500">OI</span>
                 <span className="text-slate-300 font-mono font-bold">{(selectedOI.oi / 1000).toFixed(0)}k</span>
@@ -230,15 +230,15 @@ export function PositionCalculator({
           {/* Header */}
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-3">
-              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Scalp Strategy</h3>
+              <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Scalp Strategy</h3>
               <button onClick={() => setStrategyMode(!strategyMode)}
-                className={`w-8 h-4 rounded-full transition-colors relative ${strategyMode ? 'bg-emerald-600' : 'bg-slate-800'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${strategyMode ? 'left-4.5' : 'left-0.5'}`} />
+                className={`w-10 h-5 rounded-full transition-colors relative ${strategyMode ? 'bg-emerald-600' : 'bg-slate-800'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${strategyMode ? 'left-5.5' : 'left-0.5'}`} />
               </button>
             </div>
             <div className="flex items-center gap-2">
               {/* Win Probability Badge */}
-              <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${
+              <div className={`px-2.5 py-1 rounded text-[10px] font-black uppercase border tracking-tight ${
                 winProb > 60 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                 : winProb > 40 ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
                 : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
@@ -246,9 +246,9 @@ export function PositionCalculator({
                 {winProb.toFixed(0)}% ITM Prob
               </div>
               <button onClick={() => setIsLocked(!isLocked)}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all text-[9px] font-black uppercase
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-black uppercase
                   ${isLocked ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'}`}>
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isLocked ? "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" : "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"} />
                 </svg>
                 {isLocked ? 'Unlock' : 'Lock'}
@@ -261,35 +261,35 @@ export function PositionCalculator({
             {/* SL */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-[9px] font-bold text-rose-400/80 uppercase tracking-widest flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                <label className="text-[10px] font-bold text-rose-400/80 uppercase tracking-widest flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
                   Stop Loss
                 </label>
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   {[10, 20, 30, 50].map(val => (
                     <button key={val} onClick={() => setSpotSL(val)}
-                      className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${spotSL === val ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'bg-white/5 text-slate-600 hover:bg-white/10 hover:text-slate-300'}`}
+                      className={`px-2 py-1 rounded text-[9px] font-black transition-all ${spotSL === val ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'}`}
                     >{val}</button>
                   ))}
                 </div>
               </div>
               <div className="relative group">
                 <input type="number" value={spotSL} onChange={(e) => setSpotSL(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-[#0B0E14] border border-white/10 group-hover:border-white/20 transition-colors rounded px-3 py-2 text-lg font-mono font-black text-white focus:outline-none focus:border-rose-500/50 text-left" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-slate-600 font-bold uppercase">spot pts</div>
+                  className="w-full bg-[#020617] border border-white/10 group-hover:border-white/20 transition-all rounded-lg px-4 py-3 text-2xl font-mono font-black text-rose-400 focus:outline-none focus:border-rose-500/50 text-left shadow-inner" />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold uppercase tracking-wider">pts</div>
               </div>
-              <div className="bg-rose-500/[0.04] border border-rose-500/10 rounded-lg p-2 space-y-0.5">
-                <div className="flex justify-between text-[9px]">
-                  <span className="text-slate-500 font-bold uppercase">Opt SL</span>
-                  <span className="text-rose-400 font-mono font-bold">-₹{derivedSL.toFixed(1)}</span>
+              <div className="bg-rose-500/[0.04] border border-rose-500/10 rounded-xl p-3 space-y-1.5 shadow-inner">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 font-bold uppercase tracking-wide">Opt SL</span>
+                  <span className="text-rose-400 font-mono font-black">-₹{derivedSL.toFixed(1)}</span>
                 </div>
-                <div className="flex justify-between text-[9px]">
-                  <span className="text-slate-500 font-bold uppercase">Exit @</span>
-                  <span className="text-rose-300 font-mono font-bold">₹{optCutPrice.toFixed(1)}</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 font-bold uppercase tracking-wide">Exit @</span>
+                  <span className="text-rose-300 font-mono font-black">₹{optCutPrice.toFixed(1)}</span>
                 </div>
-                <div className="flex justify-between text-[9px]">
-                  <span className="text-slate-500 font-bold uppercase">Loss/Lot</span>
-                  <span className="text-rose-400 font-mono font-bold">-₹{maxLossPerLot.toLocaleString()}</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 font-bold uppercase tracking-wide">Loss/Lot</span>
+                  <span className="text-rose-400 font-mono font-black">-₹{maxLossPerLot.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -297,35 +297,35 @@ export function PositionCalculator({
             {/* Target */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-[9px] font-bold text-emerald-400/80 uppercase tracking-widest flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                <label className="text-[10px] font-bold text-emerald-400/80 uppercase tracking-widest flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
                   Target
                 </label>
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   {[30, 50, 80, 100].map(val => (
                     <button key={val} onClick={() => setSpotTarget(val)}
-                      className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${spotTarget === val ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white/5 text-slate-600 hover:bg-white/10 hover:text-slate-300'}`}
+                      className={`px-2 py-1 rounded text-[9px] font-black transition-all ${spotTarget === val ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'}`}
                     >{val}</button>
                   ))}
                 </div>
               </div>
               <div className="relative group">
                 <input type="number" value={spotTarget} onChange={(e) => setSpotTarget(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-[#0B0E14] border border-white/10 group-hover:border-white/20 transition-colors rounded px-3 py-2 text-lg font-mono font-black text-white focus:outline-none focus:border-emerald-500/50 text-left" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-slate-600 font-bold uppercase">spot pts</div>
+                  className="w-full bg-[#020617] border border-white/10 group-hover:border-white/20 transition-all rounded-lg px-4 py-3 text-2xl font-mono font-black text-emerald-400 focus:outline-none focus:border-emerald-500/50 text-left shadow-inner" />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold uppercase tracking-wider">pts</div>
               </div>
-              <div className="bg-emerald-500/[0.04] border border-emerald-500/10 rounded-lg p-2 space-y-0.5">
-                <div className="flex justify-between text-[9px]">
-                  <span className="text-slate-500 font-bold uppercase">Opt Gain</span>
-                  <span className="text-emerald-400 font-mono font-bold">+₹{derivedTarget.toFixed(1)}</span>
+              <div className="bg-emerald-500/[0.04] border border-emerald-500/10 rounded-xl p-3 space-y-1.5 shadow-inner">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 font-bold uppercase tracking-wide">Opt Gain</span>
+                  <span className="text-emerald-400 font-mono font-black">+₹{derivedTarget.toFixed(1)}</span>
                 </div>
-                <div className="flex justify-between text-[9px]">
-                  <span className="text-slate-500 font-bold uppercase">Exit @</span>
-                  <span className="text-emerald-300 font-mono font-bold">₹{optExitPrice.toFixed(1)}</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 font-bold uppercase tracking-wide">Exit @</span>
+                  <span className="text-emerald-300 font-mono font-black">₹{optExitPrice.toFixed(1)}</span>
                 </div>
-                <div className="flex justify-between text-[9px]">
-                  <span className="text-slate-500 font-bold uppercase">Profit/Lot</span>
-                  <span className="text-emerald-400 font-mono font-bold">+₹{profitPerLot.toLocaleString()}</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 font-bold uppercase tracking-wide">Profit/Lot</span>
+                  <span className="text-emerald-400 font-mono font-black">+₹{profitPerLot.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -333,10 +333,10 @@ export function PositionCalculator({
 
           {/* ── P&L Spectrum Bar ── */}
           <div className="pt-2 border-t border-white/5 relative z-10">
-            <div className="flex items-center justify-between text-[8px] font-bold uppercase text-slate-600 mb-1">
-              <span>-₹{totalMaxLoss.toLocaleString()}</span>
-              <span className="text-slate-500">P&L Spectrum</span>
-              <span>+₹{totalMaxProfit.toLocaleString()}</span>
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase text-slate-500 mb-1.5 px-1">
+              <span className="text-rose-400">-₹{totalMaxLoss.toLocaleString()}</span>
+              <span className="tracking-[0.2em] opacity-60">P&L Spectrum</span>
+              <span className="text-emerald-400">+₹{totalMaxProfit.toLocaleString()}</span>
             </div>
             <div className="w-full h-3 bg-[#0B0E14] rounded-full overflow-hidden border border-white/5 flex">
               <div className="h-full bg-rose-500/60 transition-all duration-500"
@@ -346,31 +346,31 @@ export function PositionCalculator({
           </div>
 
           {/* ── Risk Intelligence Strip ── */}
-          <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-white/5 relative z-10">
-            <div className="bg-slate-900/40 rounded-lg p-1.5 text-center border border-white/5">
-              <div className="text-[7px] text-amber-400 uppercase font-bold">R:R</div>
-              <div className="text-base font-black font-mono leading-tight">
-                <span className="text-rose-400">1</span>
+          <div className="grid grid-cols-5 gap-2 pt-3 border-t border-white/5 relative z-10">
+            <div className="bg-slate-900/40 rounded-xl p-2 text-center border border-white/5">
+              <div className="text-[8px] text-amber-500 uppercase font-black tracking-widest mb-0.5">R:R</div>
+              <div className="text-lg font-black font-mono leading-tight">
+                <span className="text-rose-500">1</span>
                 <span className="text-slate-600">:</span>
                 <span className={`${rr >= 2 ? 'text-emerald-400' : rr >= 1 ? 'text-amber-400' : 'text-rose-400'}`}>{rr.toFixed(1)}</span>
               </div>
             </div>
-            <div className="bg-slate-900/40 rounded-lg p-1.5 text-center border border-white/5">
-              <div className="text-[7px] text-rose-400 uppercase font-bold">Θ Burn</div>
-              <div className="text-xs font-black font-mono text-rose-300 leading-tight mt-0.5">-₹{thetaCostPerDay.toFixed(0)}</div>
-              <div className="text-[6px] text-slate-600 font-bold">{thetaPctOfPremium.toFixed(1)}%/day</div>
+            <div className="bg-slate-900/40 rounded-xl p-2 text-center border border-white/5">
+              <div className="text-[8px] text-rose-500 uppercase font-black tracking-widest mb-0.5">Θ Burn</div>
+              <div className="text-xs font-black font-mono text-rose-300 leading-tight">₹{thetaCostPerDay.toFixed(0)}</div>
+              <div className="text-[8px] text-slate-500 font-bold">{thetaPctOfPremium.toFixed(1)}%/d</div>
             </div>
-            <div className="bg-slate-900/40 rounded-lg p-1.5 text-center border border-rose-500/10">
-              <div className="text-[7px] text-rose-400 uppercase font-bold">Max Loss</div>
-              <div className="text-xs font-black font-mono text-rose-400 leading-tight mt-0.5">-₹{totalMaxLoss.toLocaleString()}</div>
+            <div className="bg-slate-900/40 rounded-xl p-2 text-center border border-rose-500/10">
+              <div className="text-[8px] text-rose-500 uppercase font-black tracking-widest mb-0.5">Max Loss</div>
+              <div className="text-sm font-black font-mono text-rose-400 leading-tight mt-0.5">₹{totalMaxLoss.toLocaleString()}</div>
             </div>
-            <div className="bg-slate-900/40 rounded-lg p-1.5 text-center border border-emerald-500/10">
-              <div className="text-[7px] text-emerald-400 uppercase font-bold">Max Profit</div>
-              <div className="text-xs font-black font-mono text-emerald-400 leading-tight mt-0.5">+₹{totalMaxProfit.toLocaleString()}</div>
+            <div className="bg-slate-900/40 rounded-xl p-2 text-center border border-emerald-500/10">
+              <div className="text-[8px] text-emerald-500 uppercase font-black tracking-widest mb-0.5">Max Profit</div>
+              <div className="text-sm font-black font-mono text-emerald-400 leading-tight mt-0.5">₹{totalMaxProfit.toLocaleString()}</div>
             </div>
-            <div className="bg-slate-900/40 rounded-lg p-1.5 text-center border border-cyan-500/10">
-              <div className="text-[7px] text-cyan-400 uppercase font-bold">Efficiency</div>
-              <div className={`text-xs font-black font-mono leading-tight mt-0.5 ${capitalEfficiency >= 200 ? 'text-emerald-400' : capitalEfficiency >= 100 ? 'text-amber-400' : 'text-rose-400'}`}>{capitalEfficiency.toFixed(0)}%</div>
+            <div className="bg-slate-900/40 rounded-xl p-2 text-center border border-cyan-500/10">
+              <div className="text-[8px] text-cyan-400 uppercase font-black tracking-widest mb-0.5">Efficiency</div>
+              <div className={`text-sm font-black font-mono leading-tight mt-0.5 ${capitalEfficiency >= 200 ? 'text-emerald-400' : capitalEfficiency >= 100 ? 'text-amber-400' : 'text-rose-400'}`}>{capitalEfficiency.toFixed(0)}%</div>
             </div>
           </div>
 
@@ -397,12 +397,12 @@ export function PositionCalculator({
             </span>
           </div>
 
-          <div className="text-center space-y-2">
-            <div className="relative inline-block mx-auto group">
-              <div className="relative px-9 py-3 rounded border border-white/10 bg-[#0B0E14] group-hover:border-white/20 transition-all">
-                <div className="text-slate-400 text-[7px] uppercase font-black tracking-[0.2em]">Buy Lots</div>
-                <div className="text-4xl font-black text-white tracking-tighter leading-none">{lots}</div>
-                <div className="text-slate-500 text-[8px] font-bold mt-0.5">{totalQty} qty × ₹{lp.toFixed(1)}</div>
+          <div className="text-center space-y-3">
+            <div className="relative inline-block mx-auto group w-full">
+              <div className="relative px-9 py-4 rounded-xl border border-white/10 bg-[#020617] group-hover:border-white/20 transition-all shadow-inner">
+                <div className="text-slate-500 text-[9px] uppercase font-black tracking-[0.3em] mb-1">Buy Lots</div>
+                <div className="text-5xl font-black text-white tracking-tighter leading-none">{lots}</div>
+                <div className="text-slate-500 text-[10px] font-bold mt-2 bg-white/5 inline-block px-2 py-0.5 rounded-full">{totalQty} qty × ₹{lp.toFixed(1)}</div>
               </div>
             </div>
           </div>
@@ -425,22 +425,22 @@ export function PositionCalculator({
           </div>
 
           {/* Financial Details */}
-          <div className="bg-slate-900/50 rounded-lg p-2 border border-white/5 space-y-1">
-            <div className="flex items-center justify-between text-[8px] font-black uppercase">
+          <div className="bg-slate-900/50 rounded-xl p-3 border border-white/5 space-y-2">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase">
               <span className="text-slate-500">Max Risk</span>
-              <span className="text-rose-400 font-mono">₹{stats?.maxRiskAmount.toLocaleString() || 0}</span>
+              <span className="text-rose-400 font-mono text-xs">₹{stats?.maxRiskAmount.toLocaleString() || 0}</span>
             </div>
-            <div className="flex items-center justify-between text-[8px] font-black uppercase">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase">
               <span className="text-slate-500">Per Lot Risk</span>
-              <span className="text-rose-300 font-mono">₹{maxLossPerLot.toLocaleString()}</span>
+              <span className="text-rose-300 font-mono text-xs">₹{maxLossPerLot.toLocaleString()}</span>
             </div>
-            <div className="flex items-center justify-between text-[8px] font-black uppercase">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase border-t border-white/5 pt-1.5 mt-1.5">
               <span className="text-slate-500">Breakeven</span>
-              <span className="text-cyan-400 font-mono">{breakeven.toLocaleString()}</span>
+              <span className="text-cyan-400 font-mono text-xs">{breakeven.toLocaleString()}</span>
             </div>
-            <div className="flex items-center justify-between text-[8px] font-black uppercase">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase">
               <span className="text-slate-500">Lot Size</span>
-              <span className="text-slate-300 font-mono">{lotSize}</span>
+              <span className="text-slate-300 font-mono text-xs">{lotSize}</span>
             </div>
           </div>
 

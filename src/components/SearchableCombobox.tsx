@@ -66,7 +66,7 @@ export function SearchableCombobox({
 
   return (
     <div className="relative" ref={containerRef}>
-      <label className="block text-slate-400 text-[10px] font-bold uppercase mb-2 tracking-widest">
+      <label className="block text-slate-400 text-xs font-bold uppercase mb-2 tracking-widest opacity-80">
         {label}
       </label>
       

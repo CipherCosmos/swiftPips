@@ -79,7 +79,7 @@ export function Header({
             />
             <div className="w-10 h-5 bg-slate-700/50 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:bg-emerald-400 peer-checked:bg-emerald-500/20" />
           </div>
-          <span className="text-[10px] font-bold text-slate-500 uppercase group-hover:text-slate-400 transition-colors">Auto Refresh</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase group-hover:text-slate-400 transition-colors">Auto Refresh</span>
         </label>
         
         <button

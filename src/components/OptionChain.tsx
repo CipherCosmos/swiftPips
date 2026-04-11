@@ -122,26 +122,26 @@ export function OptionChain({
   };
 
   return (
-    <div ref={containerRef} className="overflow-x-auto overflow-y-auto max-h-[700px] premium-scroll scroll-smooth">
-      <table className="w-full border-collapse text-[10px] font-mono leading-tight bg-[#020617]/40">
+    <div ref={containerRef} className="overflow-x-auto overflow-y-auto max-h-[800px] premium-scroll scroll-smooth border border-white/5 rounded-xl shadow-2xl">
+      <table className="w-full border-collapse text-[11px] font-mono leading-tight bg-[#020617]/40">
         <thead className="sticky top-0 z-30">
-          <tr className="bg-[#0f172a] border-b border-white/10 shadow-xl text-slate-500 uppercase tracking-widest text-[8px]">
+          <tr className="bg-[#0f172a] border-b border-white/10 shadow-xl text-slate-400 font-black uppercase tracking-[0.15em] text-[10px]">
             {/* CE Side */}
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-slate-400">Δ</th>
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-10 text-slate-400">Γ</th>
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-14">OI</th>
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-14 text-slate-400">OIC</th>
-            <th className="px-1 py-3.5 text-center border-r border-white/5 w-12 text-slate-400">Vol</th>
-            <th className="px-3 py-3.5 text-right border-r-2 border-white/10 w-20">CE LTP</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-11">Δ</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-11">Γ</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-16 text-slate-300">OI</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-16">OIC</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-14">Vol</th>
+            <th className="px-3 py-4 text-right border-r-2 border-white/20 w-24 text-emerald-400">CE LTP</th>
             {/* Strike */}
-            <th className="px-3 py-3.5 text-center bg-[#0B0E14] w-24 text-slate-300 border-x border-white/5">Strike</th>
+            <th className="px-3 py-4 text-center bg-[#0B0E14] w-28 text-slate-200 border-x border-white/10">Strike</th>
             {/* PE Side */}
-            <th className="px-3 py-3.5 text-left border-l-2 border-white/10 w-20">PE LTP</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-12 text-slate-400">Vol</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-14 text-slate-400">OIC</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-14">OI</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-slate-400">Γ</th>
-            <th className="px-1 py-3.5 text-center border-l border-white/5 w-10 text-slate-400">Δ</th>
+            <th className="px-3 py-4 text-left border-l-2 border-white/20 w-24 text-rose-400">PE LTP</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-14">Vol</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-16">OIC</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-16 text-slate-300">OI</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-11">Γ</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-11">Δ</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.03]">
@@ -178,8 +178,8 @@ export function OptionChain({
                   {/* Background bar */}
                   <div className={`absolute inset-y-0 ${side === 'CE' ? 'right-0' : 'left-0'} ${barColor} transition-all duration-500`}
                     style={{ width: `${barW}%` }} />
-                  <span className="relative font-bold z-10 text-slate-200">{pct.toFixed(1)}%</span>
-                  <span className="relative text-[8px] text-slate-500 z-10">{(val / 1000).toFixed(0)}k</span>
+                  <span className="relative font-black z-10 text-[11px] text-slate-100">{pct.toFixed(1)}%</span>
+                  <span className="relative text-[10px] text-slate-500 z-10 font-bold">{(val / 1000).toFixed(0)}k</span>
                 </div>
               );
             };
@@ -201,11 +201,11 @@ export function OptionChain({
                   className={`flex flex-col items-center justify-center h-full w-full py-1.5 transition-colors ${getCellStyle(s.strike_price, val, side, 'oic')} ${signalClass}`}
                   title={`OIC: ${val.toLocaleString()} | ${pct.toFixed(1)}%`}
                 >
-                  <span className="font-bold flex items-center gap-0.5">
-                    {isSignal && <span className="text-[8px]">{side === 'CE' ? '▲' : '▼'}</span>}
+                  <span className="font-black flex items-center gap-0.5 text-[11px]">
+                    {isSignal && <span className="text-[10px]">{side === 'CE' ? '▲' : '▼'}</span>}
                     {pct.toFixed(1)}%
                   </span>
-                  <span className="text-[8px] text-slate-500 font-normal">{val > 0 ? '+' : ''}{(val / 1000).toFixed(0)}k</span>
+                  <span className="text-[10px] text-slate-500 font-bold">{val > 0 ? '+' : ''}{(val / 1000).toFixed(0)}k</span>
                 </div>
               );
             };
@@ -219,8 +219,8 @@ export function OptionChain({
               return (
                 <div className="flex flex-col items-center justify-center h-full w-full py-1.5"
                   title={`Vol: ${val.toLocaleString()} | ${pct.toFixed(1)}%`}>
-                  <span className="font-bold text-[10px] text-slate-200" style={{ opacity: 0.4 + intensity * 0.6 }}>{(val / 1000).toFixed(0)}k</span>
-                  {pct > 80 && <span className="text-[8px] text-slate-100 font-bold tracking-tighter">HOT</span>}
+                  <span className="font-black text-[11px] text-slate-200" style={{ opacity: 0.4 + intensity * 0.6 }}>{(val / 1000).toFixed(0)}k</span>
+                  {pct > 80 && <span className="text-[9px] text-slate-100 font-black tracking-tighter">HOT</span>}
                 </div>
               );
             };
@@ -256,11 +256,11 @@ export function OptionChain({
                 `}
               >
                 {/* CE Delta */}
-                <td className="px-1 py-2 border-r border-white/5 text-center">
-                  <div className={`text-[10px] font-bold ${ceGreeks.delta > 0.7 ? 'text-slate-100' : ceGreeks.delta > 0.4 ? 'text-slate-300' : 'text-slate-500'}`}>{ceGreeks.delta.toFixed(2)}</div>
+                <td className="px-1 py-2.5 border-r border-white/5 text-center">
+                  <div className={`text-[11px] font-black ${ceGreeks.delta > 0.7 ? 'text-slate-100' : ceGreeks.delta > 0.4 ? 'text-slate-300' : 'text-slate-500'}`}>{ceGreeks.delta.toFixed(2)}</div>
                 </td>
                 {/* CE Gamma */}
-                <td className="px-1 py-2 text-center border-r border-white/5 text-slate-400 text-[9px]">{ceGreeks.gamma.toFixed(4)}</td>
+                <td className="px-1 py-2.5 text-center border-r border-white/5 text-slate-400 text-[10px] font-bold">{ceGreeks.gamma.toFixed(4)}</td>
                 {/* CE OI */}
                 <td className="p-0 text-center border-r border-white/5">{formatOI(s.ce_oi, 'CE')}</td>
                 {/* CE OIC */}
@@ -273,14 +273,14 @@ export function OptionChain({
                 </td>
 
                 {/* STRIKE */}
-                <td className="px-3 py-2.5 text-center font-black bg-[#0B0E14] border-x border-white/5">
-                  <div className={`py-1 rounded border transition-all ${
-                    isSelected ? 'border-white/30 bg-white/10 text-white'
-                    : isATM ? 'border-white/10 text-white bg-white/5'
+                <td className="px-3 py-3 text-center font-black bg-[#0B0E14] border-x border-white/5">
+                  <div className={`py-1.5 rounded-lg border transition-all ${
+                    isSelected ? 'border-white/40 bg-white/10 text-white shadow-lg'
+                    : isATM ? 'border-white/10 text-white bg-white/[0.07]'
                     : 'border-transparent text-slate-400'}`}>
-                    <span className="text-xs">{s.strike_price.toLocaleString()}</span>
-                    {isATM && <span className="text-[6px] font-black uppercase block mt-0.5 text-amber-500">ATM</span>}
-                    {moneyness && !isATM && <span className="text-[5px] font-bold uppercase block mt-0.5 text-slate-600">{moneyness}</span>}
+                    <span className="text-[13px] tracking-tight">{s.strike_price.toLocaleString()}</span>
+                    {isATM && <span className="text-[9px] font-black uppercase block mt-1 text-amber-500 tracking-widest">ATM</span>}
+                    {moneyness && !isATM && <span className="text-[9px] font-black uppercase block mt-1 text-slate-600 tracking-wider font-sans">{moneyness}</span>}
                   </div>
                 </td>
 
@@ -295,10 +295,10 @@ export function OptionChain({
                 {/* PE OI */}
                 <td className="p-0 text-center border-l border-white/5">{formatOI(s.pe_oi, 'PE')}</td>
                 {/* PE Gamma */}
-                <td className="px-1 py-2 text-center border-l border-white/5 text-slate-400 text-[9px]">{peGreeks.gamma.toFixed(4)}</td>
+                <td className="px-1 py-2.5 text-center border-l border-white/5 text-slate-400 text-[10px] font-bold">{peGreeks.gamma.toFixed(4)}</td>
                 {/* PE Delta */}
-                <td className="px-1 py-2 border-l border-white/5 text-center">
-                  <div className={`text-[10px] font-bold ${Math.abs(peGreeks.delta) > 0.7 ? 'text-slate-100' : Math.abs(peGreeks.delta) > 0.4 ? 'text-slate-300' : 'text-slate-500'}`}>{peGreeks.delta.toFixed(2)}</div>
+                <td className="px-1 py-2.5 border-l border-white/5 text-center">
+                  <div className={`text-[11px] font-black ${Math.abs(peGreeks.delta) > 0.7 ? 'text-slate-100' : Math.abs(peGreeks.delta) > 0.4 ? 'text-slate-300' : 'text-slate-500'}`}>{peGreeks.delta.toFixed(2)}</div>
                 </td>
               </tr>
             );

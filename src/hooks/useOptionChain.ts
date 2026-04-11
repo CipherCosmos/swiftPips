@@ -156,12 +156,15 @@ export function useOptionChain(depth: number = 15) {
           };
         }).filter(s => s.strike_price > 0);
 
+        const rawSpot = parseFloat(result.spotLTP) || 0;
+        const rawFut = parseFloat(result.futLTP) || 0;
+
         setOptionChain({
           underlying: result.underlying,
           underlying_expiry: [result.underlying_expiry],
           strikes: mappedStrikes,
-          spotLTP: parseFloat(result.spotLTP) || 0,
-          futLTP: parseFloat(result.futLTP) || 0,
+          spotLTP: rawSpot,
+          futLTP: rawFut,
           lotsize: parseInt(result.lotsize, 10) || 0,
           pcr: parseFloat(result.pcr) || 0,
         });
@@ -224,7 +227,8 @@ export function useOptionChain(depth: number = 15) {
 
   const findATMStrike = useCallback(() => {
     if (!optionChain || optionChain.strikes.length === 0) return null;
-    const spot = optionChain.spotLTP;
+    // Mathematically, option prices are keyed to futures. Use futLTP for ATM finding if available.
+    const spot = optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP;
     let closestStrike = optionChain.strikes[0];
     let minDiff = Math.abs(closestStrike.strike_price - spot);
     for (const strike of optionChain.strikes) {

@@ -14,13 +14,13 @@ function cnd(x: number): number {
   return w;
 }
 
-export function calculateDelta(
+export function calculateGreeks(
   spot: number,
   strike: number,
   expiryDateStr: string,
   volatility: number, // e.g., 0.15 for 15%
   optionType: 'CE' | 'PE'
-): number {
+) {
   try {
     const now = new Date();
     const expiry = new Date(expiryDateStr);
@@ -29,14 +29,31 @@ export function calculateDelta(
     const v = volatility;
     
     const d1 = (Math.log(spot / strike) + (r + (v * v) / 2) * t) / (v * Math.sqrt(t));
+    const d2 = d1 - v * Math.sqrt(t);
+    
+    // PDF for Gamma and Theta
+    const pdf_d1 = Math.exp(-d1 * d1 / 2) / Math.sqrt(2 * Math.PI);
+    
+    const gamma = pdf_d1 / (spot * v * Math.sqrt(t));
+    
+    let delta = 0;
+    let thetaYearly = 0;
     
     if (optionType === 'CE') {
-      return cnd(d1);
+      delta = cnd(d1);
+      thetaYearly = -(spot * v * pdf_d1) / (2 * Math.sqrt(t)) - r * strike * Math.exp(-r * t) * cnd(d2);
     } else {
-      return cnd(d1) - 1;
+      delta = cnd(d1) - 1;
+      thetaYearly = -(spot * v * pdf_d1) / (2 * Math.sqrt(t)) + r * strike * Math.exp(-r * t) * cnd(-d2);
     }
+    
+    return {
+      delta,
+      gamma,
+      theta: thetaYearly / 365, // Daily Theta
+    };
   } catch (e) {
-    return optionType === 'CE' ? 0.5 : -0.5;
+    return { delta: optionType === 'CE' ? 0.5 : -0.5, gamma: 0, theta: 0 };
   }
 }
 

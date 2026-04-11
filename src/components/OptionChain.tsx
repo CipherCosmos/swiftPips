@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef } from 'react';
 import type { StrikeData } from '../types/api';
-import { calculateDelta } from '../utils/greeks';
+import { calculateGreeks } from '../utils/greeks';
 
 interface OptionChainProps {
   strikes: StrikeData[];
@@ -115,17 +115,17 @@ export function OptionChain({
       <table className="w-full border-collapse text-[10px] font-mono leading-tight bg-[#020617]/40">
         <thead className="sticky top-0 z-30">
           <tr className="bg-[#0f172a] border-b border-white/10 shadow-xl text-slate-500 uppercase tracking-widest text-[8px]">
-            <th className="px-1 py-4 text-center border-r border-white/5 w-12 text-blue-400">Delta</th>
-            <th className="px-1 py-4 text-center border-r border-white/5 w-16">Vol%</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-12 text-blue-400" title="Delta / Theta">D/T</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-16 text-fuchsia-400">Gamma</th>
             <th className="px-1 py-4 text-center border-r border-white/5 w-16">OI%</th>
-            <th className="px-1 py-4 text-center border-r border-white/5 w-16">CHNG%</th>
+            <th className="px-1 py-4 text-center border-r border-white/5 w-16 text-yellow-400">OIC%</th>
             <th className="px-4 py-4 text-right border-r-2 border-emerald-500/20 w-24">LTP (CE)</th>
             <th className="px-4 py-4 text-center bg-[#020617] w-28 text-emerald-500 border-x border-white/5">Strike</th>
             <th className="px-4 py-4 text-left border-l-2 border-rose-500/20 w-24">LTP (PE)</th>
-            <th className="px-1 py-4 text-center border-l border-white/5 w-16">CHNG%</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-16 text-yellow-400">OIC%</th>
             <th className="px-1 py-4 text-center border-l border-white/5 w-16">OI%</th>
-            <th className="px-1 py-4 text-center border-l border-white/5 w-16">Vol%</th>
-            <th className="px-1 py-4 text-center border-l border-white/5 w-12 text-blue-400">Delta</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-16 text-fuchsia-400">Gamma</th>
+            <th className="px-1 py-4 text-center border-l border-white/5 w-12 text-blue-400" title="Delta / Theta">D/T</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.03]">
@@ -138,16 +138,31 @@ export function OptionChain({
             const ce_oic = s.ce_oi - s.ce_pdoi;
             const pe_oic = s.pe_oi - s.pe_pdoi;
 
-            const ceDelta = atmStrike ? calculateDelta(atmStrike, s.strike_price, 4, true) : 0;
-            const peDelta = atmStrike ? calculateDelta(atmStrike, s.strike_price, 4, false) : 0;
+            const ceGreeks = atmStrike ? calculateGreeks(s.strike_price, s.strike_price, 4, true) : { delta: 0, gamma: 0, theta: 0 };
+            const peGreeks = atmStrike ? calculateGreeks(s.strike_price, s.strike_price, 4, false) : { delta: 0, gamma: 0, theta: 0 };
+            
+            // Re-calculate with properly approximated spot (closest ATM price) to get realistic curves
+            if (atmStrike) {
+                // If we know Spot from optionChain it would be better, but we only have strikes.
+                // We will use ATM Strike as a proxy for spot to generate the greek curves
+                const spotProxy = selectedStrike ? selectedStrike : atmStrike; 
+                Object.assign(ceGreeks, calculateGreeks(spotProxy, s.strike_price, 4, true));
+                Object.assign(peGreeks, calculateGreeks(spotProxy, s.strike_price, 4, false));
+            }
 
             const formatCell = (val: number, side: 'CE' | 'PE', metric: 'vol' | 'oi' | 'oic') => {
               if (!analytics) return '?';
               const max = side === 'CE' ? analytics.ce[metric].max : analytics.pe[metric].max;
               const pct = (val / max) * 100;
+              
+              // Emphasize Short Covering (CE OIC < 0) or Long Unwinding (PE OIC < 0)
+              const isShortCovering = metric === 'oic' && side === 'CE' && val < 0;
+              const isLongUnwinding = metric === 'oic' && side === 'PE' && val < 0;
+              const oicHighlight = isShortCovering ? 'text-emerald-400 font-black animate-pulse' : isLongUnwinding ? 'text-rose-400 font-black animate-pulse' : '';
+
               return (
                 <div 
-                  className={`flex flex-col items-center justify-center h-full w-full py-2 transition-colors ${getCellStyle(s.strike_price, val, side, metric)}`}
+                  className={`flex flex-col items-center justify-center h-full w-full py-2 transition-colors ${getCellStyle(s.strike_price, val, side, metric)} ${oicHighlight}`}
                   title={`Raw: ${val.toLocaleString()} | Concentration: ${pct.toFixed(2)}%`}
                 >
                   <span className="font-bold">{pct.toFixed(2)}%</span>
@@ -164,22 +179,28 @@ export function OptionChain({
                 data-atm={isATM}
                 className={`group cursor-pointer transition-all hover:bg-white/[0.04] relative ${isSelected ? 'active-row' : ''}`}
               >
-                <td className="px-1 py-3 text-center text-slate-500 font-bold border-r border-white/5 opacity-80">{ceDelta.toFixed(2)}</td>
-                <td className="p-0 text-center border-r border-white/5">{formatCell(s.ce_v, 'CE', 'vol')}</td>
+                <td className="px-1 py-2 border-r border-white/5 opacity-80 text-center">
+                  <div className="text-[10px] text-blue-400 font-bold">{ceGreeks.delta.toFixed(2)}</div>
+                  <div className="text-[8px] text-rose-500/70">{ceGreeks.theta.toFixed(1)}</div>
+                </td>
+                <td className="px-1 py-2 text-center border-r border-white/5 text-fuchsia-400/80 font-mono">{ceGreeks.gamma.toFixed(4)}</td>
                 <td className="p-0 text-center border-r border-white/5">{formatCell(s.ce_oi, 'CE', 'oi')}</td>
                 <td className="p-0 text-center border-r border-white/5">{formatCell(ce_oic, 'CE', 'oic')}</td>
                 <td className={`px-4 py-3 text-right border-r-2 border-emerald-500/20 font-bold ${isITM_CE ? 'bg-emerald-500/[0.06] text-emerald-400' : 'text-slate-400 opacity-60'}`}>₹{s.ce_ltp.toFixed(2)}</td>
                 <td className="px-4 py-3 text-center font-black bg-[#020617] border-x border-white/5">
-                  <div className={`py-1.5 rounded-lg border transition-all ${isSelected ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400' : isATM ? 'border-emerald-500/30 text-emerald-400' : 'border-transparent text-slate-400'}`}>
+                  <div className={`py-1.5 rounded-lg border transition-all ${isSelected ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400' : isATM ? 'border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-transparent text-slate-400'}`}>
                     <span className="text-xs">{s.strike_price.toLocaleString()}</span>
-                    {isATM && <span className="text-[6px] font-black uppercase text-emerald-500 block">ATM</span>}
+                    {isATM && <span className="text-[6px] font-black uppercase block mt-0.5">ATM</span>}
                   </div>
                 </td>
                 <td className={`px-4 py-3 text-left border-l-2 border-rose-500/20 font-bold ${isITM_PE ? 'bg-rose-500/[0.06] text-rose-400' : 'text-slate-400 opacity-60'}`}>₹{s.pe_ltp.toFixed(2)}</td>
                 <td className="p-0 text-center border-l border-white/5">{formatCell(pe_oic, 'PE', 'oic')}</td>
                 <td className="p-0 text-center border-l border-white/5">{formatCell(s.pe_oi, 'PE', 'oi')}</td>
-                <td className="p-0 text-center border-l border-white/5">{formatCell(s.pe_v, 'PE', 'vol')}</td>
-                <td className="px-1 py-3 text-center text-slate-500 font-bold border-l border-white/5 opacity-80">{peDelta.toFixed(2)}</td>
+                <td className="px-1 py-2 text-center border-l border-white/5 text-fuchsia-400/80 font-mono">{peGreeks.gamma.toFixed(4)}</td>
+                <td className="px-1 py-2 border-l border-white/5 opacity-80 text-center">
+                  <div className="text-[10px] text-blue-400 font-bold">{peGreeks.delta.toFixed(2)}</div>
+                  <div className="text-[8px] text-rose-500/70">{peGreeks.theta.toFixed(1)}</div>
+                </td>
               </tr>
             );
           })}

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import type { OptionChainData } from '../types/api';
-import { calculatePositionSize, calculateBreakeven, calculateDelta } from '../utils/calculations';
+import { calculatePositionSize, calculateBreakeven, calculateGreeks } from '../utils/calculations';
 
 interface PositionCalculatorProps {
   capital: number;
@@ -42,10 +42,10 @@ export function PositionCalculator({
     return selectedOptionType === 'CE' ? selectedData.ce_ltp : selectedData.pe_ltp;
   }, [selectedData, selectedOptionType]);
 
-  // Delta Calculation
-  const delta = useMemo(() => {
-    if (!optionChain?.spotLTP || !selectedStrike || !selectedExpiry) return 0.5;
-    return calculateDelta(
+  // Advanced Greeks Calculation
+  const greeks = useMemo(() => {
+    if (!optionChain?.spotLTP || !selectedStrike || !selectedExpiry) return { delta: 0.5, gamma: 0, theta: 0 };
+    return calculateGreeks(
       optionChain.spotLTP,
       selectedStrike,
       selectedExpiry,
@@ -57,12 +57,12 @@ export function PositionCalculator({
   // derived values
   const derivedSL = useMemo(() => {
     if (!strategyMode) return stopLoss;
-    return parseFloat((spotSL * Math.abs(delta)).toFixed(2));
-  }, [strategyMode, spotSL, delta, stopLoss]);
+    return parseFloat((spotSL * Math.abs(greeks.delta)).toFixed(2));
+  }, [strategyMode, spotSL, greeks.delta, stopLoss]);
 
   const derivedTarget = useMemo(() => {
-    return lp + (spotTarget * Math.abs(delta));
-  }, [lp, spotTarget, delta]);
+    return lp + (spotTarget * Math.abs(greeks.delta));
+  }, [lp, spotTarget, greeks.delta]);
 
   // Sync SL to parent when strategy mode is on
   useEffect(() => {
@@ -127,13 +127,23 @@ export function PositionCalculator({
             </div>
           </div>
           
-          <div className="pt-4 border-t border-white/5">
-            <div className="text-slate-500 text-[10px] uppercase font-bold mb-2">Advanced Greeks</div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-mono text-slate-400">Delta</span>
-              <span className="text-sm font-mono font-bold text-white">{delta.toFixed(3)}</span>
+            <div className="pt-4 border-t border-white/5 space-y-2">
+              <div className="text-slate-500 text-[10px] uppercase font-bold">Advanced Greeks</div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-slate-900/50 rounded p-1.5 border border-white/5">
+                  <span className="block text-[9px] text-slate-500 uppercase">Delta</span>
+                  <span className="text-sm font-mono font-bold text-white">{greeks.delta.toFixed(2)}</span>
+                </div>
+                <div className="bg-slate-900/50 rounded p-1.5 border border-emerald-500/10">
+                  <span className="block text-[9px] text-emerald-500 uppercase">Gamma</span>
+                  <span className="text-sm font-mono font-bold text-emerald-400">{greeks.gamma.toFixed(4)}</span>
+                </div>
+                <div className="bg-slate-900/50 rounded p-1.5 border border-rose-500/10">
+                  <span className="block text-[9px] text-rose-500 uppercase">Theta</span>
+                  <span className="text-sm font-mono font-bold text-rose-400">{greeks.theta.toFixed(1)}</span>
+                </div>
+              </div>
             </div>
-          </div>
         </div>
 
         {/* Strategy Control Panel (5 cols) */}
@@ -175,37 +185,85 @@ export function PositionCalculator({
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 relative z-10">
-            <div className="space-y-2">
-              <label className="text-[9px] font-bold text-slate-500 uppercase">Spot SL (Pts)</label>
-              <input 
-                type="number" 
-                value={spotSL} 
-                onChange={(e) => setSpotSL(parseFloat(e.target.value) || 0)}
-                className="w-full glass-input rounded-lg px-2 py-2 text-sm font-mono font-bold"
-              />
-              <div className="text-[10px] text-slate-400">Opt SL: <span className="text-emerald-400 font-bold">{derivedSL || 0}</span></div>
+          <div className="grid grid-cols-2 gap-8 relative z-10 my-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Spot SL</label>
+                <div className="flex gap-1.5">
+                  {[10, 20, 30].map(val => (
+                    <button 
+                      key={val} 
+                      onClick={() => setSpotSL(val)} 
+                      className={`px-2 py-1 rounded text-[10px] font-black transition-all ${spotSL === val ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'}`}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="relative group">
+                <input 
+                  type="number" 
+                  value={spotSL} 
+                  onChange={(e) => setSpotSL(parseFloat(e.target.value) || 0)}
+                  className="w-full bg-slate-900 border border-white/5 group-hover:border-rose-500/30 transition-colors rounded-xl px-4 py-3 text-2xl font-mono font-black text-rose-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-left"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Pts</div>
+              </div>
+              <div className="flex items-center justify-between text-[11px] bg-slate-900/50 p-2 rounded-lg border border-white/5">
+                <span className="text-slate-500 uppercase font-black tracking-wider">Opt Cut:</span>
+                <span className="text-rose-400 font-mono font-bold flex items-center gap-1.5">
+                  <span className="text-slate-600 line-through decoration-rose-500/30 text-[10px]">₹{lp.toFixed(1)}</span>
+                  <svg className="w-3 h-3 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  ₹{Math.max(0, lp - derivedSL).toFixed(1)} <span className="text-[9px] text-rose-500/70 bg-rose-500/10 px-1 rounded">-{(derivedSL).toFixed(1)}</span>
+                </span>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[9px] font-bold text-slate-500 uppercase">Spot Tgt (Pts)</label>
-              <input 
-                type="number" 
-                value={spotTarget} 
-                onChange={(e) => setSpotTarget(parseFloat(e.target.value) || 0)}
-                className="w-full glass-input rounded-lg px-2 py-2 text-sm font-mono font-bold"
-              />
-              <div className="text-[10px] text-slate-400">Opt Tgt: <span className="text-emerald-400 font-bold">{derivedTarget.toFixed(2)}</span></div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Spot Tgt</label>
+                <div className="flex gap-1.5">
+                  {[20, 40, 80].map(val => (
+                    <button 
+                      key={val} 
+                      onClick={() => setSpotTarget(val)} 
+                      className={`px-2 py-1 rounded text-[10px] font-black transition-all ${spotTarget === val ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'}`}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="relative group">
+                <input 
+                  type="number" 
+                  value={spotTarget} 
+                  onChange={(e) => setSpotTarget(parseFloat(e.target.value) || 0)}
+                  className="w-full bg-slate-900 border border-white/5 group-hover:border-emerald-500/30 transition-colors rounded-xl px-4 py-3 text-2xl font-mono font-black text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-left"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Pts</div>
+              </div>
+              <div className="flex items-center justify-between text-[11px] bg-slate-900/50 p-2 rounded-lg border border-white/5">
+                <span className="text-slate-500 uppercase font-black tracking-wider">Opt Exit:</span>
+                <span className="text-emerald-400 font-mono font-bold flex items-center gap-1.5">
+                   <span className="text-[9px] text-emerald-500/70 bg-emerald-500/10 px-1 rounded">+{Math.max(0, derivedTarget - lp).toFixed(1)}</span>
+                   ₹{Math.max(0, derivedTarget).toFixed(1)}
+                </span>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[9px] font-bold text-slate-500 uppercase">IV (%)</label>
-              <input 
-                type="number" 
-                value={iv} 
-                onChange={(e) => setIV(parseFloat(e.target.value) || 0)}
-                className="w-full glass-input rounded-lg px-2 py-2 text-sm font-mono font-bold"
-              />
-              <div className="text-[10px] text-slate-400">Black-Scholes</div>
-            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-2 border-t border-white/5">
+             <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-4 bg-amber-500 rounded-full" />
+                 <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Risk/Reward</span>
+             </div>
+             <div className="flex items-center gap-2 font-mono text-sm">
+                 <span className="text-rose-400 font-bold">1</span>
+                 <span className="text-slate-600">:</span>
+                 <span className="text-emerald-400 font-black">{(spotTarget / (spotSL || 1)).toFixed(1)}</span>
+             </div>
           </div>
 
           <div className="pt-6 border-t border-white/5 space-y-4">

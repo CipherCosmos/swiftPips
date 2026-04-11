@@ -19,24 +19,44 @@ function normCDF(x: number): number {
  * @param volatility Annualized volatility (as decimal, e.g. 0.15 for 15%)
  * @param rate Risk-free rate (default 0.07 for 7%)
  */
-export function calculateDelta(
+export function calculateGreeks(
   spot: number,
   strike: number,
   daysToExpiry: number,
   isCall: boolean,
   volatility: number = 0.16, // Typical Nifty/BankNifty Vol
   rate: number = 0.07
-): number {
+) {
   if (daysToExpiry <= 0) {
-    if (isCall) return spot >= strike ? 1 : 0;
-    return spot <= strike ? -1 : 0;
+    let delta = 0;
+    if (isCall) delta = spot >= strike ? 1 : 0;
+    else delta = spot <= strike ? -1 : 0;
+    return { delta, gamma: 0, theta: 0 };
   }
 
   const t = Math.max(daysToExpiry, 0.5) / 365; // Time in years
   const d1 = (Math.log(spot / strike) + (rate + (volatility ** 2) / 2) * t) / (volatility * Math.sqrt(t));
+  const d2 = d1 - volatility * Math.sqrt(t);
   
-  const delta = normCDF(d1);
-  return isCall ? delta : delta - 1;
+  const pdf_d1 = Math.exp(-d1 * d1 / 2) / Math.sqrt(2 * Math.PI);
+  const gamma = pdf_d1 / (spot * volatility * Math.sqrt(t));
+  
+  let delta = 0;
+  let thetaYearly = 0;
+  
+  if (isCall) {
+    delta = normCDF(d1);
+    thetaYearly = -(spot * volatility * pdf_d1) / (2 * Math.sqrt(t)) - rate * strike * Math.exp(-rate * t) * normCDF(d2);
+  } else {
+    delta = normCDF(d1) - 1;
+    thetaYearly = -(spot * volatility * pdf_d1) / (2 * Math.sqrt(t)) + rate * strike * Math.exp(-rate * t) * normCDF(-d2);
+  }
+  
+  return {
+    delta,
+    gamma,
+    theta: thetaYearly / 365 // Daily Theta
+  };
 }
 
 /**

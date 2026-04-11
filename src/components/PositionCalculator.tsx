@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import type { OptionChainData } from '../types/api';
-import { calculatePositionSize, calculateBreakeven, calculateGreeks } from '../utils/calculations';
+import { calculatePositionSize, calculateBreakeven } from '../utils/calculations';
+import { calculateGreeks, estimateDaysToExpiry } from '../utils/greeks';
 
 interface PositionCalculatorProps {
   capital: number;
@@ -29,7 +30,6 @@ export function PositionCalculator({
   const [strategyMode, setStrategyMode] = useState(true);
   const [spotSL, setSpotSL] = useState(20);
   const [spotTarget, setSpotTarget] = useState(50);
-  const [iv, setIV] = useState(15);
   const [isLocked, setIsLocked] = useState(false);
 
   const selectedData = useMemo(() => {
@@ -42,17 +42,16 @@ export function PositionCalculator({
     return selectedOptionType === 'CE' ? selectedData.ce_ltp : selectedData.pe_ltp;
   }, [selectedData, selectedOptionType]);
 
-  // Advanced Greeks Calculation
+  // Greeks — use the SAME function and params as OptionChain for consistency
   const greeks = useMemo(() => {
-    if (!optionChain?.spotLTP || !selectedStrike || !selectedExpiry) return { delta: 0.5, gamma: 0, theta: 0 };
-    return calculateGreeks(
-      optionChain.spotLTP,
-      selectedStrike,
-      selectedExpiry,
-      iv / 100,
-      selectedOptionType
-    );
-  }, [optionChain?.spotLTP, selectedStrike, selectedExpiry, iv, selectedOptionType]);
+    if (!optionChain || !selectedStrike || !selectedExpiry) return { delta: 0.5, gamma: 0, theta: 0 };
+    // Use futLTP as effective spot (options are priced off futures), fallback to spotLTP
+    const effectiveSpot = optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP;
+    if (effectiveSpot <= 0) return { delta: 0.5, gamma: 0, theta: 0 };
+    const dte = estimateDaysToExpiry(selectedExpiry);
+    const isCall = selectedOptionType === 'CE';
+    return calculateGreeks(effectiveSpot, selectedStrike, dte, isCall);
+  }, [optionChain, selectedStrike, selectedExpiry, selectedOptionType]);
 
   // derived values
   const derivedSL = useMemo(() => {

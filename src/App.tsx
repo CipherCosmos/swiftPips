@@ -376,6 +376,8 @@ function App() {
                       onSelectStrike={setSelectedStrike}
                       isReversed={isReversed}
                       strikeDepth={strikeDepth}
+                      spotPrice={optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP}
+                      expiryDate={selectedExpiry}
                     />
                   ) : (
                     <OIProfile 

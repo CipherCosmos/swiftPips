@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef } from 'react';
 import type { StrikeData } from '../types/api';
-import { calculateGreeks } from '../utils/greeks';
+import { calculateGreeks, estimateDaysToExpiry } from '../utils/greeks';
 
 interface OptionChainProps {
   strikes: StrikeData[];
@@ -9,6 +9,8 @@ interface OptionChainProps {
   onSelectStrike: (strike: number) => void;
   isReversed: boolean;
   strikeDepth: number;
+  spotPrice: number;
+  expiryDate: string;
 }
 
 export function OptionChain({
@@ -18,6 +20,8 @@ export function OptionChain({
   onSelectStrike,
   isReversed,
   strikeDepth,
+  spotPrice,
+  expiryDate,
 }: OptionChainProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const atmRowRef = useRef<HTMLTableRowElement>(null);
@@ -138,17 +142,10 @@ export function OptionChain({
             const ce_oic = s.ce_oi - s.ce_pdoi;
             const pe_oic = s.pe_oi - s.pe_pdoi;
 
-            const ceGreeks = atmStrike ? calculateGreeks(s.strike_price, s.strike_price, 4, true) : { delta: 0, gamma: 0, theta: 0 };
-            const peGreeks = atmStrike ? calculateGreeks(s.strike_price, s.strike_price, 4, false) : { delta: 0, gamma: 0, theta: 0 };
-            
-            // Re-calculate with properly approximated spot (closest ATM price) to get realistic curves
-            if (atmStrike) {
-                // If we know Spot from optionChain it would be better, but we only have strikes.
-                // We will use ATM Strike as a proxy for spot to generate the greek curves
-                const spotProxy = selectedStrike ? selectedStrike : atmStrike; 
-                Object.assign(ceGreeks, calculateGreeks(spotProxy, s.strike_price, 4, true));
-                Object.assign(peGreeks, calculateGreeks(spotProxy, s.strike_price, 4, false));
-            }
+            const dte = estimateDaysToExpiry(expiryDate);
+            const effectiveSpot = spotPrice > 0 ? spotPrice : (atmStrike || s.strike_price);
+            const ceGreeks = calculateGreeks(effectiveSpot, s.strike_price, dte, true);
+            const peGreeks = calculateGreeks(effectiveSpot, s.strike_price, dte, false);
 
             const formatCell = (val: number, side: 'CE' | 'PE', metric: 'vol' | 'oi' | 'oic') => {
               if (!analytics) return '?';

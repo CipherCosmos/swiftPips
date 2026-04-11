@@ -3,7 +3,13 @@ import { getUnderlyings, getExpiries, getOptionChain, loadAuthToken } from '../s
 import { norenWS } from '../services/websocket';
 import type { OptionChainData, StrikeData, TickData } from '../types/api';
 
-export function useOptionChain() {
+const parseNum = (val: any): number => {
+  if (typeof val === 'number') return val;
+  if (!val || typeof val !== 'string') return 0;
+  return parseFloat(val.replace(/,/g, '')) || 0;
+};
+
+export function useOptionChain(depth: number = 15) {
   const [underlyings, setUnderlyings] = useState<string[]>([]);
   const [selectedUnderlying, setSelectedUnderlying] = useState<string>('');
   const [expiries, setExpiries] = useState<string[]>([]);
@@ -62,15 +68,15 @@ export function useOptionChain() {
 
         const updated = { ...s };
         if (isCE) {
-          if (tick.lp) updated.ce_ltp = parseFloat(tick.lp);
-          if (tick.oi) updated.ce_oi = parseInt(tick.oi, 10);
-          if (tick.v) updated.ce_v = parseInt(tick.v, 10);
-          if (tick.poi) updated.ce_pdoi = parseInt(tick.poi, 10);
+          if (tick.lp) updated.ce_ltp = parseNum(tick.lp);
+          if (tick.oi) updated.ce_oi = parseNum(tick.oi);
+          if (tick.v) updated.ce_v = parseNum(tick.v);
+          if (tick.poi) updated.ce_pdoi = parseNum(tick.poi);
         } else {
-          if (tick.lp) updated.pe_ltp = parseFloat(tick.lp);
-          if (tick.oi) updated.pe_oi = parseInt(tick.oi, 10);
-          if (tick.v) updated.pe_v = parseInt(tick.v, 10);
-          if (tick.poi) updated.pe_pdoi = parseInt(tick.poi, 10);
+          if (tick.lp) updated.pe_ltp = parseNum(tick.lp);
+          if (tick.oi) updated.pe_oi = parseNum(tick.oi);
+          if (tick.v) updated.pe_v = parseNum(tick.v);
+          if (tick.poi) updated.pe_pdoi = parseNum(tick.poi);
         }
         return updated;
       });
@@ -84,22 +90,34 @@ export function useOptionChain() {
     try {
       setError(null);
       setLoading(true);
-      const response = await getOptionChain(selectedUnderlying, selectedExpiry);
+      const response = await getOptionChain(selectedUnderlying, selectedExpiry, depth.toString());
       const result = response.result[0];
       if (result) {
-        const mappedStrikes: StrikeData[] = result.data.map(s => ({
-          strike_price: parseFloat(s.strike || s.stk || s.stk_prc || s.strikeprice || s.strikePrice || s.strike_price || '0') || 0,
-          ce_ltp: parseFloat(s.CE?.ltp || '0') || 0,
-          pe_ltp: parseFloat(s.PE?.ltp || '0') || 0,
-          ce_oi: parseInt(s.CE?.oi || '0', 10) || 0,
-          pe_oi: parseInt(s.PE?.oi || '0', 10) || 0,
-          ce_v: parseInt(s.CE?.v || '0', 10) || 0,
-          pe_v: parseInt(s.PE?.v || '0', 10) || 0,
-          ce_pdoi: parseInt(s.CE?.pdoi || '0', 10) || 0,
-          pe_pdoi: parseInt(s.PE?.pdoi || '0', 10) || 0,
-          ce_token: s.CE?.token,
-          pe_token: s.PE?.token,
-        }));
+        const getVal = (obj: any, keys: string[]) => {
+          for (const key of keys) {
+            if (obj[key] !== undefined && obj[key] !== null && obj[key] !== '') return obj[key];
+          }
+          return '0';
+        };
+
+        const mappedStrikes: StrikeData[] = result.data.map(s => {
+          const ceRaw = (s as any).CE || {};
+          const peRaw = (s as any).PE || {};
+          
+          return {
+            strike_price: parseNum(s.strike || s.stk || s.stk_prc || s.strikeprice || s.strikePrice || s.strike_price || '0'),
+            ce_ltp: parseNum(ceRaw.ltp || '0'),
+            pe_ltp: parseNum(peRaw.ltp || '0'),
+            ce_oi: parseNum(getVal(ceRaw, ['oi', 'toi', 'openinterest', 'tot_oi'])),
+            pe_oi: parseNum(getVal(peRaw, ['oi', 'toi', 'openinterest', 'tot_oi'])),
+            ce_v: parseNum(getVal(ceRaw, ['v', 'vol', 'volume', 'total_vol', 'tv'])),
+            pe_v: parseNum(getVal(peRaw, ['v', 'vol', 'volume', 'total_vol', 'tv'])),
+            ce_pdoi: parseNum(ceRaw.pdoi || '0'),
+            pe_pdoi: parseNum(peRaw.pdoi || '0'),
+            ce_token: ceRaw.token,
+            pe_token: peRaw.token,
+          };
+        }).filter(s => s.strike_price > 0);
 
         setOptionChain({
           underlying: result.underlying,
@@ -128,7 +146,7 @@ export function useOptionChain() {
     } finally {
       setLoading(false);
     }
-  }, [selectedUnderlying, selectedExpiry, handleTick]);
+  }, [selectedUnderlying, selectedExpiry, depth, handleTick]);
 
   useEffect(() => {
     return () => {
@@ -154,7 +172,7 @@ export function useOptionChain() {
     if (selectedUnderlying && selectedExpiry && loadAuthToken()) {
       fetchOptionChain();
     }
-  }, [selectedUnderlying, selectedExpiry, fetchOptionChain]);
+  }, [selectedUnderlying, selectedExpiry, depth, fetchOptionChain]);
 
   useEffect(() => {
     if (autoRefresh && selectedUnderlying && selectedExpiry) {

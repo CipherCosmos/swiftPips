@@ -82,11 +82,11 @@ export async function getExpiries(underlying: string): Promise<string[]> {
   return response.result[0]?.underlying_expiry || [];
 }
 
-export async function getOptionChain(underlying: string, expiry: string): Promise<OptionChainResponse> {
+export async function getOptionChain(underlying: string, expiry: string, interval: string = '15'): Promise<OptionChainResponse> {
   return fetchAPI<OptionChainResponse>('/obrest/optionChain/getOptionChain', {
     underlying,
     expiry,
-    interval: '15',
+    interval,
     exch: 'nse_fo'
   });
 }

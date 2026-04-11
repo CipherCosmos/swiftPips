@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { OptionChain } from './components/OptionChain';
+import { OIProfile } from './components/OIProfile';
 import { PositionCalculator } from './components/PositionCalculator';
 import { useOptionChain } from './hooks/useOptionChain';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -14,6 +15,9 @@ function App() {
   const [tokenInput, setTokenInput] = useState('');
   const [tokenSet, setTokenSet] = useState(!!loadAuthToken());
   const [wsStatus, setWsStatus] = useState<'offline' | 'connecting' | 'live' | 'error'>('offline');
+  const [isReversed, setIsReversed] = useLocalStorage('chain_reversed', false);
+  const [strikeDepth, setStrikeDepth] = useLocalStorage('chain_depth', 15);
+  const [viewMode, setViewMode] = useState<'table' | 'profile'>('table');
 
   const {
     underlyings,
@@ -33,7 +37,7 @@ function App() {
     onAutoRefreshChange,
     refresh,
     findATMStrike,
-  } = useOptionChain() as any;
+  } = useOptionChain(strikeDepth) as any;
 
   const atmStrike = useMemo(() => findATMStrike(), [findATMStrike, optionChain]);
 
@@ -273,32 +277,112 @@ function App() {
             />
 
             <div className="glass-card overflow-hidden">
-              <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Option Chain Terminal</h3>
-                {error && (
-                  <div className="flex items-center gap-2 text-rose-400 text-[10px] font-bold uppercase animate-pulse">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    {error}
+              <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+                <div className="flex items-center gap-6">
+                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Option Chain Terminal</h3>
+                  
+                  <div className="flex items-center gap-2 border-l border-white/10 pl-6">
+                    <button
+                      onClick={() => setIsReversed(!isReversed)}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all ${
+                        isReversed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      <svg className={`w-3 h-3 transition-transform ${isReversed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                      {isReversed ? 'Descending' : 'Ascending'}
+                    </button>
+
+                    <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 ml-2">
+                      {[10, 15, 20, 30].map(depth => (
+                        <button
+                          key={depth}
+                          onClick={() => setStrikeDepth(depth)}
+                          className={`px-2 py-1 rounded text-[9px] font-bold transition-all ${
+                            strikeDepth === depth ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 hover:text-slate-300'
+                          }`}
+                        >
+                          ±{depth}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const row = document.querySelector('.active-row') || document.querySelector('[data-atm="true"]');
+                        row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                      className="ml-4 flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase bg-white/5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all border border-transparent hover:border-emerald-500/20"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Center ATM
+                    </button>
                   </div>
-                )}
-                {loading && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
-                    <span className="text-[10px] text-emerald-500 font-bold uppercase">Syncing...</span>
+
+                  <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 ml-4">
+                    <button
+                      onClick={() => setViewMode('table')}
+                      className={`px-3 py-1 rounded text-[9px] font-bold transition-all flex items-center gap-1.5 ${
+                        viewMode === 'table' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Table
+                    </button>
+                    <button
+                      onClick={() => setViewMode('profile')}
+                      className={`px-3 py-1 rounded text-[9px] font-bold transition-all flex items-center gap-1.5 ${
+                        viewMode === 'profile' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Profile
+                    </button>
                   </div>
-                )}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {error && (
+                    <div className="flex items-center gap-2 text-rose-400 text-[10px] font-bold uppercase animate-pulse">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      {error}
+                    </div>
+                  )}
+                  {loading && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                      <span className="text-[10px] text-emerald-500 font-bold uppercase">Syncing...</span>
+                    </div>
+                  )}
+                </div>
               </div>
               
-              <div className="max-h-[600px] overflow-y-auto premium-scroll">
+              <div className="max-h-[600px] overflow-y-auto premium-scroll relative">
                 {optionChain ? (
-                  <OptionChain
-                    strikes={optionChain.strikes}
-                    atmStrike={atmStrike}
-                    selectedStrike={selectedStrike}
-                    onSelectStrike={setSelectedStrike}
-                  />
+                  viewMode === 'table' ? (
+                    <OptionChain
+                      strikes={optionChain.strikes}
+                      atmStrike={atmStrike}
+                      selectedStrike={selectedStrike}
+                      onSelectStrike={setSelectedStrike}
+                      isReversed={isReversed}
+                      strikeDepth={strikeDepth}
+                    />
+                  ) : (
+                    <OIProfile 
+                      data={optionChain}
+                      isReversed={isReversed}
+                    />
+                  )
                 ) : (
                   <div className="h-[400px] flex flex-col items-center justify-center text-slate-500 space-y-4">
                     <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 animate-spin" />

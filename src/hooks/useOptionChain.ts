@@ -90,7 +90,7 @@ export function useOptionChain(depth: number = 15) {
     try {
       setError(null);
       setLoading(true);
-      const response = await getOptionChain(selectedUnderlying, selectedExpiry, depth.toString());
+      const response = await getOptionChain(selectedUnderlying, selectedExpiry, '30');
       const result = response.result[0];
       if (result) {
         const getVal = (obj: any, keys: string[]) => {
@@ -212,7 +212,7 @@ export function useOptionChain(depth: number = 15) {
     if (selectedUnderlying && selectedExpiry && loadAuthToken()) {
       fetchOptionChain();
     }
-  }, [selectedUnderlying, selectedExpiry, depth, fetchOptionChain]);
+  }, [selectedUnderlying, selectedExpiry, fetchOptionChain]);
 
   useEffect(() => {
     if (autoRefresh && selectedUnderlying && selectedExpiry) {

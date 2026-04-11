@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import type { OptionChainData } from '../types/api';
 
 interface OIProfileProps {
@@ -6,179 +6,430 @@ interface OIProfileProps {
   isReversed: boolean;
 }
 
+type ProfileMode = 'walls' | 'momentum' | 'net' | 'gamma';
+
 export function OIProfile({ data, isReversed }: OIProfileProps) {
   const { strikes, spotLTP } = data;
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Calculate Max values for scaling
-  const maxStats = useMemo(() => {
-    const allOI = strikes.flatMap(s => [s.ce_oi, s.pe_oi]).filter(v => v > 0);
-    if (allOI.length === 0) return { maxOI: 1, hasData: false };
-    
-    // Linear scale shows true volume differences
-    const maxVal = allOI.length > 0 ? Math.max(...allOI) : 1;
-    
-    return {
-      maxOI: maxVal,
-      hasData: true,
-    };
-  }, [strikes]);
+  const [mode, setMode] = useState<ProfileMode>('walls');
 
   const sortedStrikes = useMemo(() => {
     return isReversed ? [...strikes].sort((a, b) => b.strike_price - a.strike_price) : strikes;
   }, [strikes, isReversed]);
 
-  // Find relative position of spot price
+  const interval = useMemo(() => {
+    if (sortedStrikes.length < 2) return 50;
+    return Math.abs(sortedStrikes[1].strike_price - sortedStrikes[0].strike_price);
+  }, [sortedStrikes]);
+
+  // ─── Precomputed Analytics ───
+  const analytics = useMemo(() => {
+    const oiMax = Math.max(...strikes.flatMap(s => [s.ce_oi, s.pe_oi]).filter(v => v > 0), 1);
+
+    const oicValues = strikes.map(s => ({
+      ce: s.ce_oi - s.ce_pdoi,
+      pe: s.pe_oi - s.pe_pdoi,
+    }));
+    const oicAbsMax = Math.max(...oicValues.flatMap(v => [Math.abs(v.ce), Math.abs(v.pe)]), 1);
+
+    const netOI = strikes.map(s => s.pe_oi - s.ce_oi);
+    const netMax = Math.max(...netOI.map(Math.abs), 1);
+
+    // Gamma Exposure approx: OI × Gamma-proxy (1/distance-from-ATM)
+    // Closer to ATM = higher gamma. We use a simple bell-curve weighting
+    const gammaExp = strikes.map(s => {
+      const dist = Math.abs(s.strike_price - spotLTP);
+      const gammaWeight = Math.exp(-0.5 * Math.pow(dist / (interval * 3), 2)); // Gaussian bell
+      return {
+        ce: s.ce_oi * gammaWeight,
+        pe: s.pe_oi * gammaWeight,
+        net: (s.pe_oi - s.ce_oi) * gammaWeight,
+      };
+    });
+    const gammaMax = Math.max(...gammaExp.flatMap(g => [Math.abs(g.ce), Math.abs(g.pe)]), 1);
+    const gammaNetMax = Math.max(...gammaExp.map(g => Math.abs(g.net)), 1);
+
+    // Key support/resistance levels
+    const maxPutOIStrike = strikes.reduce((max, s) => s.pe_oi > max.pe_oi ? s : max, strikes[0]);
+    const maxCallOIStrike = strikes.reduce((max, s) => s.ce_oi > max.ce_oi ? s : max, strikes[0]);
+
+    // PCR at each strike
+    const pcrPerStrike = strikes.map(s => s.ce_oi > 0 ? s.pe_oi / s.ce_oi : 0);
+
+    return { oiMax, oicValues, oicAbsMax, netOI, netMax, gammaExp, gammaMax, gammaNetMax, maxPutOIStrike, maxCallOIStrike, pcrPerStrike };
+  }, [strikes, spotLTP, interval]);
+
+  // Spot needle position
   const spotPosition = useMemo(() => {
-    if (sortedStrikes.length < 2) return 0;
-    
-    // Find the two strikes the spot price is between
+    if (sortedStrikes.length < 2) return -1;
     for (let i = 0; i < sortedStrikes.length - 1; i++) {
-        const s1 = sortedStrikes[i].strike_price;
-        const s2 = sortedStrikes[i+1].strike_price;
-        const min = Math.min(s1, s2);
-        const max = Math.max(s1, s2);
-        
-        if (spotLTP >= min && spotLTP <= max) {
-            const range = max - min;
-            const pos = (spotLTP - min) / range;
-            // Return index position (i or i+1 based on direction)
-            return isReversed ? (i + (1 - pos)) : (i + pos);
-        }
+      const s1 = sortedStrikes[i].strike_price;
+      const s2 = sortedStrikes[i + 1].strike_price;
+      const min = Math.min(s1, s2);
+      const max = Math.max(s1, s2);
+      if (spotLTP >= min && spotLTP <= max) {
+        const pos = (spotLTP - min) / (max - min);
+        return isReversed ? (i + (1 - pos)) : (i + pos);
+      }
     }
     return -1;
   }, [sortedStrikes, spotLTP, isReversed]);
 
-  // Auto-scroll to spot price
   useEffect(() => {
     if (containerRef.current && spotPosition !== -1) {
-      const strikeWidth = 36; // Adjusted for narrower columns
-      const scrollPos = (spotPosition * strikeWidth) - (containerRef.current.clientWidth / 2) + 18;
+      const strikeWidth = 40;
+      const scrollPos = (spotPosition * strikeWidth) - (containerRef.current.clientWidth / 2) + 20;
       containerRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
     }
-  }, [spotPosition]);
+  }, [spotPosition, mode]);
+
+  const BAR_W = 40;
+
+  const modeConfig: Record<ProfileMode, { label: string; icon: string; desc: string }> = {
+    walls: { label: 'OI Walls', icon: '🧱', desc: 'Support & Resistance walls from total Open Interest' },
+    momentum: { label: 'Momentum', icon: '⚡', desc: 'Change in OI — where fresh money is flowing RIGHT NOW' },
+    net: { label: 'Net Bias', icon: '🧭', desc: 'PUT OI − CALL OI per strike — net directional bias' },
+    gamma: { label: 'Gamma Exp', icon: '💥', desc: 'OI-weighted Gamma Exposure — sharpest moves predicted here' },
+  };
+
+  // ─── Bar Renderers ───
+  const renderWalls = (s: typeof sortedStrikes[0], _idx: number) => {
+    const ceH = s.ce_oi > 0 ? (s.ce_oi / analytics.oiMax) * 85 : 0;
+    const peH = s.pe_oi > 0 ? (s.pe_oi / analytics.oiMax) * 85 : 0;
+    const isMaxPut = s.strike_price === analytics.maxPutOIStrike.strike_price;
+    const isMaxCall = s.strike_price === analytics.maxCallOIStrike.strike_price;
+
+    return (
+      <div className="flex items-end gap-[2px] h-full">
+        {/* PUT bar */}
+        <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
+          {s.pe_oi > 0 && (
+            <div
+              className={`relative w-full transition-all duration-500 rounded-t-sm ${isMaxPut ? 'bg-gradient-to-t from-emerald-700 via-emerald-500 to-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-gradient-to-t from-emerald-900 via-emerald-700 to-emerald-500'}`}
+              style={{ height: `${Math.max(peH, 3)}%` }}
+            >
+              {isMaxPut && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-black text-emerald-300 bg-emerald-950 px-1 rounded border border-emerald-500/50 whitespace-nowrap">MAX</div>}
+            </div>
+          )}
+          <div className="absolute -top-8 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+            <span className="text-[9px] font-black bg-slate-950 border border-emerald-500/50 text-emerald-300 px-1.5 py-0.5 rounded shadow-xl">P:{(s.pe_oi / 1000).toFixed(0)}k</span>
+          </div>
+        </div>
+        {/* CALL bar */}
+        <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
+          {s.ce_oi > 0 && (
+            <div
+              className={`relative w-full transition-all duration-500 rounded-t-sm ${isMaxCall ? 'bg-gradient-to-t from-rose-700 via-rose-500 to-rose-300 shadow-[0_0_20px_rgba(225,29,72,0.4)]' : 'bg-gradient-to-t from-rose-900 via-rose-700 to-rose-500'}`}
+              style={{ height: `${Math.max(ceH, 3)}%` }}
+            >
+              {isMaxCall && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-black text-rose-300 bg-rose-950 px-1 rounded border border-rose-500/50 whitespace-nowrap">MAX</div>}
+            </div>
+          )}
+          <div className="absolute -top-8 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+            <span className="text-[9px] font-black bg-slate-950 border border-rose-500/50 text-rose-300 px-1.5 py-0.5 rounded shadow-xl">C:{(s.ce_oi / 1000).toFixed(0)}k</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMomentum = (s: typeof sortedStrikes[0], idx: number) => {
+    const oic = analytics.oicValues[strikes.indexOf(s)] || { ce: 0, pe: 0 };
+    const ceH = (Math.abs(oic.ce) / analytics.oicAbsMax) * 42;
+    const peH = (Math.abs(oic.pe) / analytics.oicAbsMax) * 42;
+
+    // Scalper signals:
+    // CE OIC < 0 = Short Covering → Bullish breakout signal
+    // PE OIC < 0 = Long Unwinding → Bearish breakdown signal
+    const ceSignal = oic.ce < 0 ? 'cover' : oic.ce > 0 ? 'build' : 'flat';
+    const peSignal = oic.pe < 0 ? 'unwind' : oic.pe > 0 ? 'build' : 'flat';
+
+    return (
+      <div className="flex flex-col items-center h-full justify-center">
+        {/* Positive = build (above center), Negative = unwind (below center mirrored) */}
+        <div className="flex items-end gap-[2px] h-[45%]">
+          {/* PE OIC up */}
+          <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
+            {oic.pe > 0 && (
+              <div className="w-full bg-gradient-to-t from-emerald-800 to-emerald-400 rounded-t-sm transition-all duration-500"
+                style={{ height: `${Math.max(peH, 4)}%` }} />
+            )}
+            <div className="absolute -top-6 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+              <span className="text-[8px] font-black bg-slate-950 border border-emerald-500/40 text-emerald-300 px-1 py-0.5 rounded">{(oic.pe / 1000).toFixed(0)}k</span>
+            </div>
+          </div>
+          {/* CE OIC up */}
+          <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
+            {oic.ce > 0 && (
+              <div className="w-full bg-gradient-to-t from-rose-800 to-rose-400 rounded-t-sm transition-all duration-500"
+                style={{ height: `${Math.max(ceH, 4)}%` }} />
+            )}
+            <div className="absolute -top-6 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+              <span className="text-[8px] font-black bg-slate-950 border border-rose-500/40 text-rose-300 px-1 py-0.5 rounded">{(oic.ce / 1000).toFixed(0)}k</span>
+            </div>
+          </div>
+        </div>
+        {/* Center axis */}
+        <div className="w-full h-[1px] bg-white/10 my-0.5" />
+        {/* Negative = unwinding (below center) */}
+        <div className="flex items-start gap-[2px] h-[45%]">
+          <div className="flex flex-col items-center justify-start h-full w-[16px] relative">
+            {oic.pe < 0 && (
+              <div className={`w-full rounded-b-sm transition-all duration-500 ${peSignal === 'unwind' ? 'bg-gradient-to-b from-rose-400 to-rose-800 shadow-[0_0_12px_rgba(225,29,72,0.4)]' : 'bg-slate-700'}`}
+                style={{ height: `${Math.max(peH, 4)}%` }}>
+                {peSignal === 'unwind' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 text-[6px] font-black text-rose-300 animate-pulse">▼</div>}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col items-center justify-start h-full w-[16px] relative">
+            {oic.ce < 0 && (
+              <div className={`w-full rounded-b-sm transition-all duration-500 ${ceSignal === 'cover' ? 'bg-gradient-to-b from-emerald-400 to-emerald-800 shadow-[0_0_12px_rgba(16,185,129,0.4)]' : 'bg-slate-700'}`}
+                style={{ height: `${Math.max(ceH, 4)}%` }}>
+                {ceSignal === 'cover' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 text-[6px] font-black text-emerald-300 animate-pulse">▲</div>}
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Signal badges */}
+        {(ceSignal === 'cover' || peSignal === 'unwind') && (
+          <div className={`absolute bottom-14 text-[6px] font-black px-1 py-0.5 rounded animate-pulse z-50 ${ceSignal === 'cover' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}`}>
+            {ceSignal === 'cover' ? 'SC' : 'LU'}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderNet = (s: typeof sortedStrikes[0], idx: number) => {
+    const net = analytics.netOI[strikes.indexOf(s)] || 0;
+    const pct = (Math.abs(net) / analytics.netMax) * 45;
+    const isBullish = net > 0; // More PUT OI than CALL = support = bullish
+
+    return (
+      <div className="flex flex-col items-center h-full justify-center">
+        {/* Bullish (above) */}
+        <div className="flex items-end h-[48%] w-full justify-center">
+          {isBullish && (
+            <div className="w-[24px] bg-gradient-to-t from-emerald-900 via-emerald-600 to-emerald-400 rounded-t-sm transition-all duration-500 relative group/bar"
+              style={{ height: `${Math.max(pct, 3)}%` }}>
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+                <span className="text-[8px] font-black bg-slate-950 border border-emerald-500/40 text-emerald-300 px-1 py-0.5 rounded">+{(net / 1000).toFixed(0)}k</span>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="w-full h-[1px] bg-white/10" />
+        {/* Bearish (below) */}
+        <div className="flex items-start h-[48%] w-full justify-center">
+          {!isBullish && net !== 0 && (
+            <div className="w-[24px] bg-gradient-to-b from-rose-600 via-rose-700 to-rose-900 rounded-b-sm transition-all duration-500 relative group/bar"
+              style={{ height: `${Math.max(pct, 3)}%` }}>
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+                <span className="text-[8px] font-black bg-slate-950 border border-rose-500/40 text-rose-300 px-1 py-0.5 rounded">{(net / 1000).toFixed(0)}k</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderGamma = (s: typeof sortedStrikes[0], idx: number) => {
+    const ge = analytics.gammaExp[strikes.indexOf(s)] || { ce: 0, pe: 0, net: 0 };
+    const netPct = (Math.abs(ge.net) / analytics.gammaNetMax) * 45;
+    const isBullish = ge.net > 0;
+    const intensity = Math.abs(ge.net) / analytics.gammaNetMax;
+
+    return (
+      <div className="flex flex-col items-center h-full justify-center">
+        <div className="flex items-end h-[48%] w-full justify-center">
+          {isBullish && (
+            <div className={`w-[24px] rounded-t-sm transition-all duration-500 relative group/bar ${intensity > 0.7 ? 'shadow-[0_0_15px_rgba(16,185,129,0.5)]' : ''}`}
+              style={{
+                height: `${Math.max(netPct, 3)}%`,
+                background: `linear-gradient(to top, rgba(16,185,129,${0.3 + intensity * 0.7}), rgba(52,211,153,${0.5 + intensity * 0.5}))`,
+              }}>
+              {intensity > 0.6 && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[6px] font-black text-emerald-300 animate-pulse">⚡</div>}
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+                <span className="text-[8px] font-black bg-slate-950 border border-emerald-500/40 text-emerald-300 px-1 py-0.5 rounded">GEX+</span>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="w-full h-[1px] bg-white/10" />
+        <div className="flex items-start h-[48%] w-full justify-center">
+          {!isBullish && ge.net !== 0 && (
+            <div className={`w-[24px] rounded-b-sm transition-all duration-500 relative group/bar ${intensity > 0.7 ? 'shadow-[0_0_15px_rgba(225,29,72,0.5)]' : ''}`}
+              style={{
+                height: `${Math.max(netPct, 3)}%`,
+                background: `linear-gradient(to bottom, rgba(225,29,72,${0.3 + intensity * 0.7}), rgba(251,113,133,${0.3 + intensity * 0.5}))`,
+              }}>
+              {intensity > 0.6 && <div className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 text-[6px] font-black text-rose-300 animate-pulse">⚡</div>}
+              <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
+                <span className="text-[8px] font-black bg-slate-950 border border-rose-500/40 text-rose-300 px-1 py-0.5 rounded">GEX−</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderBar = (s: typeof sortedStrikes[0], idx: number) => {
+    switch (mode) {
+      case 'walls': return renderWalls(s, idx);
+      case 'momentum': return renderMomentum(s, idx);
+      case 'net': return renderNet(s, idx);
+      case 'gamma': return renderGamma(s, idx);
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full bg-[#020617]/80 border-t border-white/5 premium-scroll">
-      {/* Header Info */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/20">
-        <div className="flex items-center gap-6">
-            <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Liquidity Concentration</span>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" /> <span className="text-[9px] font-bold text-slate-300">PUT OI</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.4)]" /> <span className="text-[9px] font-bold text-slate-300">CALL OI</span></div>
-                </div>
+    <div className="flex flex-col h-full bg-[#020617]/80 border-t border-white/5">
+      {/* ─── Header: Mode Tabs + Legend ─── */}
+      <div className="px-4 py-3 border-b border-white/5 bg-black/20">
+        <div className="flex items-center justify-between">
+          {/* Mode Tabs */}
+          <div className="flex items-center gap-1 bg-slate-900/80 rounded-lg p-0.5 border border-white/5">
+            {(Object.keys(modeConfig) as ProfileMode[]).map(m => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`px-2.5 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                  mode === m
+                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40'
+                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                }`}
+              >
+                <span>{modeConfig[m].icon}</span>
+                {modeConfig[m].label}
+              </button>
+            ))}
+          </div>
+
+          {/* Spot + Legend */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 text-[9px] font-bold">
+              {mode === 'walls' && (
+                <>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500" /> PUT (Support)</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-rose-500" /> CALL (Resistance)</span>
+                </>
+              )}
+              {mode === 'momentum' && (
+                <>
+                  <span className="flex items-center gap-1 text-emerald-400"><span className="animate-pulse">▲</span> Short Cover (Bullish)</span>
+                  <span className="flex items-center gap-1 text-rose-400"><span className="animate-pulse">▼</span> Long Unwind (Bearish)</span>
+                </>
+              )}
+              {mode === 'net' && (
+                <>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500" /> Bullish Bias</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-rose-500" /> Bearish Bias</span>
+                </>
+              )}
+              {mode === 'gamma' && (
+                <>
+                  <span className="flex items-center gap-1 text-emerald-400">⚡ Buyer Zone</span>
+                  <span className="flex items-center gap-1 text-rose-400">⚡ Seller Zone</span>
+                </>
+              )}
             </div>
-            <div className="h-8 w-[1px] bg-white/10" />
-            <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-slate-500 uppercase tracking-tighter">Live Spot</span>
-                <span className="text-sm font-black text-emerald-400 font-mono">₹{spotLTP.toLocaleString()}</span>
+            <div className="h-6 w-[1px] bg-white/10" />
+            <div className="flex flex-col items-end">
+              <span className="text-[8px] text-slate-500 uppercase font-bold">Spot</span>
+              <span className="text-xs font-black text-amber-400 font-mono">₹{spotLTP.toLocaleString()}</span>
             </div>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/50 rounded-lg border border-white/5">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Linear Scale Mode</span>
-        </div>
+        <div className="text-[8px] text-slate-600 mt-1.5 italic">{modeConfig[mode].desc}</div>
       </div>
 
-      {/* Main Chart Area */}
-      <div 
+      {/* ─── Chart Area ─── */}
+      <div
         ref={containerRef}
-        className="flex-1 overflow-x-auto overflow-y-hidden premium-scroll relative px-[25%]"
+        className="flex-1 overflow-x-auto overflow-y-hidden premium-scroll relative px-[20%]"
       >
-        <div className="flex items-end h-[500px] py-16 relative min-w-max">
-            {/* Spot Price Needle */}
-            {spotPosition !== -1 && (
-                <div 
-                    className="absolute top-0 bottom-12 w-[1px] z-30 pointer-events-none transition-all duration-300"
-                    style={{ left: `${spotPosition * 36 + 18}px` }}
-                >
-                    <div className="h-full bg-emerald-400/20 w-full relative">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-emerald-400 px-2 py-0.5 rounded-sm shadow-[0_0_15px_rgba(52,211,153,0.5)] z-40">
-                            <span className="text-[8px] font-black text-slate-950 uppercase tracking-tighter">PRICE</span>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-b from-emerald-400/30 via-transparent to-transparent" />
-                    </div>
+        <div className="flex items-stretch h-[480px] py-8 relative min-w-max">
+          {/* Spot Needle */}
+          {spotPosition !== -1 && (
+            <div
+              className="absolute top-0 bottom-10 w-[2px] z-30 pointer-events-none transition-all duration-300"
+              style={{ left: `${spotPosition * BAR_W + BAR_W / 2}px` }}
+            >
+              <div className="h-full bg-amber-400/15 w-full relative">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-amber-400 px-2 py-0.5 rounded-sm shadow-[0_0_15px_rgba(245,158,11,0.5)] z-40">
+                  <span className="text-[7px] font-black text-slate-950 uppercase tracking-tighter">SPOT</span>
                 </div>
-            )}
-
-            {/* Bars Grid */}
-            <div className="flex items-end gap-0 h-full">
-                {sortedStrikes.map((s) => {
-                    // Linear Scaling for accurate representation
-                    const ceOIPct = s.ce_oi > 0 ? (s.ce_oi / maxStats.maxOI) * 85 : 0;
-                    const peOIPct = s.pe_oi > 0 ? (s.pe_oi / maxStats.maxOI) * 85 : 0;
-                    
-                    const ce_oic = s.ce_oi - s.ce_pdoi;
-                    const pe_oic = s.pe_oi - s.pe_pdoi;
-                    
-                    const isATM = Math.abs(s.strike_price - spotLTP) < (Math.abs(sortedStrikes[1]?.strike_price - sortedStrikes[0]?.strike_price) || 50);
-
-                    return (
-                        <div key={s.strike_price} className="w-[36px] flex flex-col items-center group relative h-full justify-end hover:z-50">
-                            {/* Comparison Cluster container */}
-                            <div className="flex items-end gap-[1px] px-0 h-full relative">
-                                {/* Put Bar (Green) */}
-                                <div className="flex flex-col items-center justify-end h-full w-3 group/put relative">
-                                    {s.pe_oi > 0 && (
-                                        <div className="relative w-full transition-all duration-500 bg-gradient-to-t from-emerald-900 via-emerald-600 to-emerald-500 rounded-t-sm group-hover:from-emerald-500 group-hover:to-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
-                                             style={{ height: `${Math.max(peOIPct, 4)}%` }}>
-                                             {/* OIC Spike */}
-                                             {pe_oic !== 0 && (
-                                                 <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${pe_oic > 0 ? 'bg-emerald-300 shadow-[0_0_10px_rgba(16,185,129,1)]' : 'bg-emerald-950 border border-white/20'}`} />
-                                             )}
-                                        </div>
-                                    )}
-                                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-                                        <span className="text-[10px] font-black bg-slate-950 border border-emerald-500/50 text-emerald-300 px-2 py-1 rounded shadow-xl">P: {s.pe_oi.toLocaleString()}</span>
-                                    </div>
-                                </div>
-
-                                {/* Call Bar (Red) */}
-                                <div className="flex flex-col items-center justify-end h-full w-3 group/call relative">
-                                    {s.ce_oi > 0 && (
-                                        <div className="relative w-full transition-all duration-500 bg-gradient-to-t from-rose-900 via-rose-600 to-rose-500 rounded-t-sm group-hover:from-rose-500 group-hover:to-rose-400 shadow-[0_0_15px_rgba(225,29,72,0.15)]" 
-                                             style={{ height: `${Math.max(ceOIPct, 4)}%` }}>
-                                             {/* OIC Spike */}
-                                             {ce_oic !== 0 && (
-                                                 <div className={`absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${ce_oic > 0 ? 'bg-rose-300 shadow-[0_0_10px_rgba(225,29,72,1)]' : 'bg-rose-950 border border-white/20'}`} />
-                                             )}
-                                        </div>
-                                    )}
-                                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-                                        <span className="text-[10px] font-black bg-slate-950 border border-rose-500/50 text-rose-300 px-2 py-1 rounded shadow-xl">C: {s.ce_oi.toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Strike Label */}
-                            <div className={`
-                                mt-4 flex flex-col items-center z-10 w-full
-                                ${isATM ? 'scale-110' : 'scale-90'} transition-transform
-                            `}>
-                                <div className={`
-                                    text-[9px] font-black px-1 py-0.5 rounded border transition-all whitespace-nowrap
-                                    ${isATM ? 'bg-amber-500/20 border-amber-500/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-slate-900/95 border-slate-700 text-slate-400 group-hover:text-white group-hover:bg-slate-800'}
-                                `}>
-                                    {s.strike_price.toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 via-transparent to-transparent" />
+              </div>
             </div>
+          )}
+
+          {/* Key Level Markers */}
+          {mode === 'walls' && sortedStrikes.map((s, i) => {
+            const isMaxPut = s.strike_price === analytics.maxPutOIStrike.strike_price;
+            const isMaxCall = s.strike_price === analytics.maxCallOIStrike.strike_price;
+            if (!isMaxPut && !isMaxCall) return null;
+            return (
+              <div key={`marker-${s.strike_price}`}
+                className="absolute top-2 bottom-10 pointer-events-none z-10"
+                style={{ left: `${i * BAR_W}px`, width: `${BAR_W}px` }}>
+                <div className={`h-full w-full border-x border-dashed ${isMaxPut ? 'border-emerald-500/15' : 'border-rose-500/15'}`} />
+              </div>
+            );
+          })}
+
+          {/* Bars */}
+          <div className="flex items-stretch gap-0 h-full">
+            {sortedStrikes.map((s, idx) => {
+              const isATM = Math.abs(s.strike_price - spotLTP) < interval;
+
+              return (
+                <div key={s.strike_price} className={`flex flex-col items-center group relative h-full justify-end hover:z-50`} style={{ width: `${BAR_W}px` }}>
+                  <div className="flex-1 flex items-stretch w-full relative">
+                    {renderBar(s, idx)}
+                  </div>
+
+                  {/* Strike Label */}
+                  <div className={`mt-2 flex flex-col items-center z-10 w-full ${isATM ? 'scale-105' : 'scale-90'} transition-transform`}>
+                    <div className={`text-[8px] font-black px-1 py-0.5 rounded border transition-all whitespace-nowrap
+                      ${isATM
+                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                        : 'bg-slate-900/90 border-slate-800 text-slate-500 group-hover:text-white group-hover:bg-slate-800'}`}
+                    >
+                      {s.strike_price.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-      <div className="px-6 py-3 border-t border-white/5 bg-black/40 flex justify-between items-center text-[10px]">
-        <div className="text-slate-500 italic">
-            * Bars represent total Open Interest. Top "Dots" indicate positive Change in OI (Momentum).
+
+      {/* ─── Footer: Key Levels Summary ─── */}
+      <div className="px-4 py-2.5 border-t border-white/5 bg-black/40 flex justify-between items-center">
+        <div className="flex items-center gap-4 text-[9px]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-3 bg-emerald-500 rounded-sm" />
+            <span className="text-slate-400 font-bold uppercase">Support:</span>
+            <span className="text-emerald-400 font-mono font-black">{analytics.maxPutOIStrike.strike_price.toLocaleString()}</span>
+            <span className="text-slate-600 font-mono">({(analytics.maxPutOIStrike.pe_oi / 100000).toFixed(1)}L)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-3 bg-rose-500 rounded-sm" />
+            <span className="text-slate-400 font-bold uppercase">Resistance:</span>
+            <span className="text-rose-400 font-mono font-black">{analytics.maxCallOIStrike.strike_price.toLocaleString()}</span>
+            <span className="text-slate-600 font-mono">({(analytics.maxCallOIStrike.ce_oi / 100000).toFixed(1)}L)</span>
+          </div>
+          <div className="h-4 w-[1px] bg-white/10" />
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400 font-bold uppercase">Range:</span>
+            <span className="text-amber-400 font-mono font-bold">{(analytics.maxCallOIStrike.strike_price - analytics.maxPutOIStrike.strike_price).toLocaleString()} pts</span>
+          </div>
         </div>
-        <div className="flex gap-4">
-            <span className="text-slate-400">Scan: {sortedStrikes[0]?.strike_price} - {sortedStrikes[sortedStrikes.length-1]?.strike_price}</span>
-            <span className="text-emerald-400 font-bold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-500/10">Dynamic Tracking Active</span>
-        </div>
+        <span className="text-emerald-500/60 text-[8px] font-bold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-500/10 uppercase tracking-wider">Live</span>
       </div>
     </div>
   );

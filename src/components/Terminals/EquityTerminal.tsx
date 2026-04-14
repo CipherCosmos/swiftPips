@@ -199,7 +199,7 @@ export function EquityTerminal({ capital, riskPercent }: EquityTerminalProps) {
           {/* Risk metrics */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'R:R', value: rr > 0 ? `1:${rr.toFixed(1)}` : '—', color: rr >= 2 ? 'text-[var(--cyan-400)]' : rr > 0 ? 'text-amber-400' : 'text-[var(--text-muted)]' },
+              { label: 'R:R', value: rr > 0 ? `1:${rr.toFixed(1)}` : '—', color: rr >= 2 ? 'text-[var(--cyan-400)]' : rr > 0 ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]' },
               { label: 'Margin', value: stats ? `₹${stats.requiredMargin.toLocaleString()}` : '—', color: 'text-[var(--cyan-400)]' },
               { label: 'Max Loss', value: stats ? `₹${totalRiskAmt.toLocaleString()}` : '—', color: 'text-[var(--rose-400)]' },
             ].map(m => (

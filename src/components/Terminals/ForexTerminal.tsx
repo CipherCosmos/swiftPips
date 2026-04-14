@@ -76,7 +76,7 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                   <button 
                     key={t}
                     onClick={() => setLotType(t)}
-                    className={`py-1.5 rounded-md text-[9px] font-black uppercase transition-all ${lotType === t ? 'bg-rose-600 text-white shadow-lg ' : 'bg-[var(--bg-raised)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
+                    className={`py-1.5 rounded-md text-[9px] font-black uppercase transition-all ${lotType === t ? 'bg-[var(--rose-600)] text-white' : 'bg-[var(--bg-raised)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
                   >
                     {t}
                   </button>
@@ -153,8 +153,8 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                <div className="flex justify-between items-center text-[10px] font-black uppercase text-[var(--text-muted)] px-1">
                   <span>Margin Context (Leverage)</span>
                   <div className="flex gap-2">
-                     {[100, 200, 500].map(l => (
-                        <button key={l} onClick={()=>setLeverage(l)} className={`px-2 py-0.5 rounded text-[8px] font-black ${leverage === l ? 'bg-[var(--rose-600)] text-white' : 'bg-[var(--bg-raised)] text-[var(--text-muted)]'}`}>1:{l}</button>
+                     {[100, 200, 500].map(leverageOption => (
+                        <button key={leverageOption} onClick={() => setLeverage(leverageOption)} className={`px-2 py-0.5 rounded text-[8px] font-black ${leverage === leverageOption ? 'bg-[var(--rose-600)] text-white' : 'bg-[var(--bg-raised)] text-[var(--text-muted)]'}`}>1:{leverageOption}</button>
                      ))}
                   </div>
                </div>

@@ -162,7 +162,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                 className={`group py-2 rounded-md text-[10px] font-black uppercase transition-all duration-300 relative overflow-hidden ${!isShort ? 'bg-[var(--cyan-600)] text-white ' : 'bg-[var(--bg-raised)]/50 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-raised)]'}`}
               >
                 <span className="relative z-10">Long / Buy</span>
-                {!isShort && <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-transparent " />}
+                {!isShort && <div className="absolute inset-0 bg-gradient-to-r from-[var(--cyan-500)]/20 to-transparent" />}
               </button>
               <button 
                 onClick={() => setIsShort(true)}
@@ -301,7 +301,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                       else if (tpMode === 'RR') setRrTarget(val);
                       else updateTPFromRelative(val, tpMode as any);
                     }}
-                    className="w-full bg-[var(--bg-deep)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-2xl font-mono font-black text-[var(--cyan-400)] outline-none focus:border-emerald-500/50 shadow-inner"
+                    className="w-full bg-[var(--bg-deep)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-2xl font-mono font-black text-[var(--cyan-400)] outline-none focus:border-[var(--border-cyan)] shadow-inner"
                     placeholder="0.00"
                   />
                 </div>
@@ -327,7 +327,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
             <div className="bg-[var(--bg-raised)]/50 p-4 rounded-xl border border-[var(--border)] space-y-4">
                <div className="flex justify-between items-center text-[10px] font-black uppercase text-[var(--text-muted)] px-1">
                   <span>Max Allowed Leverage</span>
-                  <span className="text-amber-400">{maxAllowedLeverage}x</span>
+                  <span className="text-[var(--cyan-400)]">{maxAllowedLeverage}x</span>
                </div>
                <input 
                   type="range" 

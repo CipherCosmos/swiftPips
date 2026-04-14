@@ -101,14 +101,26 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
 
   return (
     <div className="card overflow-hidden">
+      {/* Header bar */}
+      <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-raised)] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-4 rounded-full bg-[var(--cyan-500)]" />
+          <h2 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Crypto Futures Sizer</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          {stats?.validity && (
+            <span className={`tag ${stats.validity === 'VALID' ? 'tag-cyan' : stats.validity === 'RISKY' ? 'tag-rose' : 'tag-rose'}`}>
+              {stats.validity}
+            </span>
+          )}
+          <span className="tag tag-cyan">Crypto</span>
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[var(--border)]">
         
         {/* Col 1: Market Intelligence */}
         <div className="p-4 space-y-4 bg-[var(--bg-raised)] lg:col-span-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Market Intelligence</h3>
-            <div className="px-2 py-0.5 rounded bg-[var(--cyan-dim)] text-[9px] font-black text-amber-400 uppercase tracking-widest animate-pulse">Live Feed</div>
-          </div>
+          <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest">Contract Setup</div>
 
           <div className="space-y-3">
             <div>
@@ -118,9 +130,9 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                   type="text" 
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                  className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] rounded-lg px-3 py-2 text-sm font-black text-white focus:border-amber-500/50 outline-none"
+                  className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] rounded-lg px-3 py-2 text-sm font-black text-white focus:border-[var(--border-cyan)] outline-none"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-amber-400/50 uppercase">BINANCE:PERP</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-[var(--text-faint)] uppercase">BINANCE:PERP</span>
               </div>
             </div>
 
@@ -129,7 +141,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                  <span className="text-[8px] text-[var(--text-muted)] uppercase font-bold">Mark Price (USDT)</span>
                  <button 
                    onClick={() => setEntryPrice(parseFloat((65241.50 + (Math.random() - 0.5) * 10).toFixed(2)))}
-                   className="text-[8px] font-black text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded hover:bg-[var(--cyan-dim)] active:scale-95 transition-all"
+                   className="text-[8px] font-black text-[var(--cyan-400)] border border-[var(--border-cyan)] px-1.5 py-0.5 rounded hover:bg-[var(--cyan-dim)] active:scale-95 transition-all"
                    title="Snap to Current Market Price"
                  >
                    SNAP
@@ -147,17 +159,17 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--border)]">
               <button 
                 onClick={() => setIsShort(false)}
-                className={`group py-2 rounded-md text-[10px] font-black uppercase transition-all duration-300 relative overflow-hidden ${!isShort ? 'bg-[var(--cyan-600)] text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-[var(--bg-raised)]/50 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-slate-800'}`}
+                className={`group py-2 rounded-md text-[10px] font-black uppercase transition-all duration-300 relative overflow-hidden ${!isShort ? 'bg-[var(--cyan-600)] text-white ' : 'bg-[var(--bg-raised)]/50 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-raised)]'}`}
               >
                 <span className="relative z-10">Long / Buy</span>
-                {!isShort && <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-transparent animate-shimmer" />}
+                {!isShort && <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-transparent " />}
               </button>
               <button 
                 onClick={() => setIsShort(true)}
-                className={`group py-2 rounded-md text-[10px] font-black uppercase transition-all duration-300 relative overflow-hidden ${isShort ? 'bg-rose-600 text-white shadow-[0_0_20px_rgba(244,63,94,0.3)]' : 'bg-[var(--bg-raised)]/50 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-slate-800'}`}
+                className={`group py-2 rounded-md text-[10px] font-black uppercase transition-all duration-300 relative overflow-hidden ${isShort ? 'bg-rose-600 text-white shadow-[0_0_20px_rgba(244,63,94,0.3)]' : 'bg-[var(--bg-raised)]/50 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-raised)]'}`}
               >
                 <span className="relative z-10">Short / Sell</span>
-                {isShort && <div className="absolute inset-0 bg-gradient-to-r from-rose-400/20 to-transparent animate-shimmer" />}
+                {isShort && <div className="absolute inset-0 bg-gradient-to-r from-rose-400/20 to-transparent " />}
               </button>
             </div>
           </div>
@@ -178,19 +190,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
 
         {/* Col 2: Risk Configuration */}
         <div className="p-5 lg:col-span-6 space-y-6">
-          <div className="flex items-center justify-between text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-            <h3>Institutional Risk Config</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] text-slate-600">STILL VALID?</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                stats?.validity === 'VALID' ? 'bg-emerald-500/20 text-[var(--cyan-500)]' :
-                stats?.validity === 'RISKY' ? 'bg-amber-500/20 text-amber-400' :
-                'bg-rose-500/20 text-rose-500'
-              }`}>
-                {stats?.validity || 'WAITING'}
-              </span>
-            </div>
-          </div>
+          <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Risk Configuration</div>
 
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
@@ -201,10 +201,10 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                     type="number" 
                     value={manualRiskAmount ?? ''}
                     onChange={(e) => setManualRiskAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-xl font-mono font-black text-white outline-none focus:border-amber-500/50"
+                    className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-xl font-mono font-black text-white outline-none focus:border-[var(--border-cyan)]"
                     placeholder={(capital * (riskPercent / 100)).toFixed(2)}
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600 uppercase">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-[var(--text-faint)] uppercase">
                     {manualRiskAmount ? 'Manual' : 'Global %'}
                   </span>
                 </div>
@@ -217,7 +217,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                     type="number" 
                     value={availableMargin || ''}
                     onChange={(e) => setAvailableMargin(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-xl font-mono font-black text-amber-400 outline-none focus:border-amber-500/50"
+                    className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-xl font-mono font-black text-[var(--cyan-400)] outline-none focus:border-[var(--border-cyan)]"
                     placeholder="Margin"
                   />
                 </div>
@@ -251,7 +251,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                       if (slMode === 'PRICE') setStopLossPrice(val);
                       else updateSLFromRelative(val, slMode as any);
                     }}
-                    className="w-full bg-[#020617] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-2xl font-mono font-black text-rose-400 outline-none focus:border-rose-500/50 shadow-inner"
+                    className="w-full bg-[var(--bg-deep)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-2xl font-mono font-black text-rose-400 outline-none focus:border-rose-500/50 shadow-inner"
                     placeholder="0.00"
                   />
                 </div>
@@ -278,7 +278,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                       <button
                         key={m}
                         onClick={() => setTpMode(m)}
-                        className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-colors ${tpMode === m ? 'bg-emerald-500 text-white' : 'text-[var(--text-muted)]'}`}
+                        className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-colors ${tpMode === m ? 'bg-[var(--cyan-600)] text-white' : 'text-[var(--text-muted)]'}`}
                       >
                         {m === 'PRICE' ? '$' : m === 'PERCENT' ? '%' : m}
                       </button>
@@ -301,7 +301,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                       else if (tpMode === 'RR') setRrTarget(val);
                       else updateTPFromRelative(val, tpMode as any);
                     }}
-                    className="w-full bg-[#020617] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-2xl font-mono font-black text-[var(--cyan-400)] outline-none focus:border-emerald-500/50 shadow-inner"
+                    className="w-full bg-[var(--bg-deep)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-2xl font-mono font-black text-[var(--cyan-400)] outline-none focus:border-emerald-500/50 shadow-inner"
                     placeholder="0.00"
                   />
                 </div>
@@ -315,7 +315,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                         setRrTarget(r);
                       }
                       }
-                      className="flex-1 py-1 rounded bg-[var(--cyan-dim)] hover:bg-emerald-500/20 text-[8px] font-black text-[var(--cyan-500)] transition-colors"
+                      className="flex-1 py-1 rounded bg-[var(--cyan-dim)] hover:bg-[var(--cyan-dim)] text-[8px] font-black text-[var(--cyan-500)] transition-colors"
                     >
                       1:{r}
                     </button>
@@ -336,7 +336,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
                   step="1" 
                   value={maxAllowedLeverage}
                   onChange={(e) => setMaxAllowedLeverage(parseInt(e.target.value))}
-                  className="w-full accent-amber-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-full accent-[var(--cyan-500)] bg-[var(--bg-raised)] h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
                 <div className="grid grid-cols-2 gap-2">
                    {stats?.warnings.map((w, i) => (
@@ -366,70 +366,52 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
         {/* Col 3: Execution Panel */}
         <div className="p-4 bg-[var(--bg-raised)] space-y-4 lg:col-span-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Execution Desk</h3>
-            <span className="text-[8px] font-black text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase">Isolated</span>
+            <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Execution</div>
+            <span className="tag tag-cyan">Isolated</span>
           </div>
 
-          <div className="bg-[#020617] border border-[var(--border-md)] rounded-2xl p-6 text-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] relative overflow-hidden group">
-            <div className={`absolute inset-0 transition-opacity duration-500 ${stats?.validity === 'INVALID' ? 'bg-rose-500/5 opacity-100' : 'bg-amber-500/5 opacity-0'}`} />
-            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-               <svg className="w-12 h-12 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12.89 3L14.85 3.4L11.11 21L9.15 20.6L12.89 3ZM19.59 12L16 8.41L17.41 7L22.41 12L17.41 17L16 15.59L19.59 12ZM4.41 12L8 15.59L6.59 17L1.59 12L6.59 7L8 8.41L4.41 12Z" /></svg>
-            </div>
-            <div className="text-[var(--text-muted)] text-[9px] uppercase font-black tracking-[0.3em] mb-1 relative z-10">Position Size (Tokens)</div>
-            <div className={`text-5xl font-black tracking-tighter leading-none my-2 relative z-10 transition-colors ${stats?.validity === 'INVALID' ? 'text-rose-500' : 'text-white'}`}>
+          <div className="bg-[var(--bg-deep)] border border-[var(--border-md)] rounded-xl p-6 text-center relative overflow-hidden">
+            <div className={`absolute top-0 left-0 w-full h-0.5 transition-colors ${stats?.validity === 'INVALID' ? 'bg-[var(--rose-600)]' : 'bg-[var(--cyan-600)]'}`} />
+            <div className="text-[var(--text-muted)] text-[10px] uppercase font-bold tracking-widest mb-1">Position Size</div>
+            <div className={`text-5xl font-black tracking-tighter leading-none my-2 transition-colors ${stats?.validity === 'INVALID' ? 'text-[var(--rose-400)]' : 'text-[var(--text-primary)]'}`}>
               {stats?.units || 0}
             </div>
-            <div className={`text-[10px] font-bold px-3 py-1 rounded-full inline-block uppercase mt-2 relative z-10 transition-colors ${stats?.validity === 'INVALID' ? 'bg-rose-500/20 text-rose-500' : 'bg-[var(--cyan-dim)] text-amber-400'}`}>
+            <div className={`tag mt-1 ${stats?.validity === 'INVALID' ? 'tag-rose' : 'tag-cyan'}`}>
               ≈ ${(stats?.positionValue || 0).toLocaleString()}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="bg-[var(--bg-raised)]/50 rounded-xl p-3 border border-[var(--border)] space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                <span className="text-[var(--text-muted)]">Required Leverage</span>
-                <span className={`font-mono ${stats && stats.requiredLeverage > maxAllowedLeverage ? 'text-rose-500' : 'text-amber-400'}`}>
-                  {stats?.requiredLeverage.toFixed(2)}x
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                <span className="text-[var(--text-muted)]">Initial Margin</span>
-                <span className="text-amber-400 font-mono">${stats?.requiredMargin.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-[10px] font-black uppercase pt-2 border-t border-[var(--border)] mt-1">
-                <span className="text-[var(--text-muted)]">Wallet Usage</span>
-                <span className="text-white font-mono">{((stats?.requiredMargin || 0) / (availableMargin || 1) * 100).toFixed(1)}%</span>
-              </div>
+          <div className="rounded-lg border border-[var(--border)] divide-y divide-[var(--border)]">
+            <div className="flex justify-between items-center px-3 py-2.5 text-[10px] font-semibold uppercase">
+              <span className="text-[var(--text-muted)]">Required Leverage</span>
+              <span className={`font-mono ${stats && stats.requiredLeverage > maxAllowedLeverage ? 'text-[var(--rose-400)]' : 'text-[var(--cyan-400)]'}`}>
+                {stats?.requiredLeverage.toFixed(2)}x
+              </span>
             </div>
-
-            {stats?.suggestions.length ? (
-              <div className="bg-emerald-500/5 rounded-xl p-3 border border-emerald-500/10 space-y-2">
-                <span className="text-[8px] font-black text-[var(--cyan-500)] uppercase block mb-1">Optimizer Suggestions</span>
-                {stats.suggestions.map((s, i) => (
-                  <div key={i} className="text-[9px] font-bold text-[var(--cyan-400)] leading-tight">
-                    → {s}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-amber-500/5 rounded-xl p-3 border border-amber-500/10">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[8px] font-black text-amber-400 uppercase">Margin Safety</span>
-                  <span className="text-[8px] font-black text-[var(--cyan-400)] uppercase">Secure</span>
-                </div>
-                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500" style={{ width: '85%' }} />
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col items-center gap-1 py-1 border-t border-[var(--border)]">
-               <span className="text-[7px] text-slate-600 font-black uppercase tracking-[0.2em]">Safety Protocol Active</span>
-               {stats && stats.validity !== 'INVALID' && (
-                 <span className="text-[8px] text-[var(--cyan-500)]/50 font-bold uppercase italic tabular-nums">Risk Verification: {stats.units} x {stats.slDistance.toFixed(2)} = ${stats.maxRiskAmount.toFixed(2)}</span>
-               )}
+            <div className="flex justify-between items-center px-3 py-2.5 text-[10px] font-semibold uppercase">
+              <span className="text-[var(--text-muted)]">Initial Margin</span>
+              <span className="text-[var(--cyan-400)] font-mono">${stats?.requiredMargin.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center px-3 py-2.5 text-[10px] font-semibold uppercase">
+              <span className="text-[var(--text-muted)]">Wallet Usage</span>
+              <span className="text-[var(--text-primary)] font-mono">{((stats?.requiredMargin || 0) / (availableMargin || 1) * 100).toFixed(1)}%</span>
             </div>
           </div>
+
+          {stats?.suggestions.length ? (
+            <div className="bg-[var(--cyan-dim)] rounded-lg p-3 border border-[var(--border-cyan)] space-y-1.5">
+              <span className="text-[10px] font-bold text-[var(--cyan-400)] uppercase block">Suggestions</span>
+              {stats.suggestions.map((s, i) => (
+                <div key={i} className="text-[10px] text-[var(--cyan-400)] leading-tight">→ {s}</div>
+              ))}
+            </div>
+          ) : null}
+
+          {stats && stats.validity !== 'INVALID' && (
+            <div className="text-[9px] text-[var(--text-faint)] font-mono text-center pt-1 border-t border-[var(--border)]">
+              {stats.units} × {stats.slDistance.toFixed(2)} = ${stats.maxRiskAmount.toFixed(2)}
+            </div>
+          )}
         </div>
 
       </div>

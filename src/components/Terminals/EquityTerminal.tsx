@@ -16,7 +16,6 @@ export function EquityTerminal({ capital, riskPercent }: EquityTerminalProps) {
 
   const leverage = mode === 'INTRADAY' ? 5 : 1;
 
-  // Sync SL price when points/percent changes
   const effectiveStopLossPrice = useMemo(() => {
     if (entryPrice <= 0) return 0;
     if (slMode === 'POINTS') return Math.max(0, entryPrice - slValue);
@@ -25,13 +24,7 @@ export function EquityTerminal({ capital, riskPercent }: EquityTerminalProps) {
 
   const stats = useMemo(() => {
     if (entryPrice <= 0 || effectiveStopLossPrice <= 0) return null;
-    return calculateEquitySizing({
-      capital,
-      riskPercent,
-      entryPrice,
-      stopLossPrice: effectiveStopLossPrice,
-      leverage
-    });
+    return calculateEquitySizing({ capital, riskPercent, entryPrice, stopLossPrice: effectiveStopLossPrice, leverage });
   }, [capital, riskPercent, entryPrice, effectiveStopLossPrice, leverage]);
 
   const rr = useMemo(() => {
@@ -42,180 +35,224 @@ export function EquityTerminal({ capital, riskPercent }: EquityTerminalProps) {
 
   const portfolioWeight = stats ? (stats.requiredMargin / capital) * 100 : 0;
   const riskPerShare = entryPrice > 0 ? (Math.abs(entryPrice - effectiveStopLossPrice) / entryPrice) * 100 : 0;
+  const totalRiskAmt = stats?.maxRiskAmount || 0;
+  const totalRewardAmt = totalRiskAmt * rr;
 
   return (
     <div className="card overflow-hidden">
+      {/* Header bar */}
+      <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-raised)] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-4 rounded-full bg-[var(--cyan-500)]" />
+          <h2 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Equity Position Sizer</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`tag ${rr >= 2 ? 'tag-cyan' : 'tag-rose'}`}>
+            {rr > 0 ? `R:R  1:${rr.toFixed(1)}` : 'No RR'}
+          </span>
+          <span className="tag tag-cyan">Equity</span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[var(--border)]">
-        
-        {/* Col 1: Asset Intelligence */}
-        <div className="p-4 space-y-4 bg-[var(--bg-raised)] lg:col-span-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Asset Intelligence</h3>
-            <div className="px-2 py-0.5 rounded bg-[var(--cyan-dim)] text-[9px] font-black text-[var(--cyan-500)] uppercase tracking-widest">Equity</div>
+
+        {/* ── Col 1: Symbol & Prices (3/12) ── */}
+        <div className="p-5 space-y-4 lg:col-span-3">
+          <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest mb-3">Trade Setup</div>
+
+          {/* Symbol */}
+          <div>
+            <label className="text-[10px] text-[var(--text-muted)] uppercase font-semibold tracking-wide mb-1.5 block">Symbol</label>
+            <input
+              type="text"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              placeholder="RELIANCE, HDFCBANK…"
+              className="sp-input w-full rounded-lg px-3 py-2 text-sm font-bold uppercase"
+            />
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <label className="text-[9px] text-[var(--text-muted)] uppercase font-black tracking-widest mb-1.5 block">Search Symbol</label>
-              <input 
-                type="text" 
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                placeholder="RELIANCE, HDFCBANK..."
-                className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] rounded-lg px-3 py-2 text-xs font-bold text-white uppercase focus:border-[var(--cyan-500)] outline-none"
+          {/* Prices */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border)]">
+              <span className="block text-[10px] text-[var(--text-muted)] uppercase font-semibold mb-1">Entry</span>
+              <input
+                type="number"
+                value={entryPrice || ''}
+                onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
+                className="w-full bg-transparent text-lg font-mono font-bold text-[var(--text-primary)] outline-none"
+                placeholder="0.00"
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[var(--bg-raised)] rounded-lg p-2 border border-[var(--border)]">
-                <span className="block text-[8px] text-[var(--text-muted)] uppercase font-bold mb-1">Entry Price</span>
-                <input 
-                  type="number" 
-                  value={entryPrice || ''}
-                  onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-transparent text-lg font-mono font-black text-white outline-none"
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="bg-[var(--bg-raised)] rounded-lg p-2 border border-[var(--border)]">
-                <span className="block text-[8px] text-[var(--text-muted)] uppercase font-bold mb-1">Target Price</span>
-                <input 
-                  type="number" 
-                  value={targetPrice || ''}
-                  onChange={(e) => setTargetPrice(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-transparent text-lg font-mono font-black text-[var(--cyan-400)] outline-none"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-[var(--border)]">
-              <div className="text-[9px] text-[var(--text-muted)] uppercase font-black mb-2">Trade Mode</div>
-              <div className="grid grid-cols-2 gap-2">
-                {(['INTRADAY', 'DELIVERY'] as const).map(m => (
-                  <button 
-                    key={m}
-                    onClick={() => setMode(m)}
-                    className={`py-1.5 rounded-md text-[10px] font-black transition-all ${mode === m ? 'bg-[var(--cyan-600)] text-white shadow-lg ' : 'bg-[var(--bg-raised)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
-                  >
-                    {m === 'INTRADAY' ? 'Intraday (5x)' : 'Delivery (1x)'}
-                  </button>
-                ))}
-              </div>
+            <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border)]">
+              <span className="block text-[10px] text-[var(--text-muted)] uppercase font-semibold mb-1">Target</span>
+              <input
+                type="number"
+                value={targetPrice || ''}
+                onChange={(e) => setTargetPrice(parseFloat(e.target.value) || 0)}
+                className="w-full bg-transparent text-lg font-mono font-bold text-[var(--cyan-400)] outline-none"
+                placeholder="0.00"
+              />
             </div>
           </div>
 
-          <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border)] space-y-2">
-             <div className="flex justify-between items-center">
-                <span className="text-[9px] text-[var(--text-muted)] font-bold uppercase">Risk per Share</span>
-                <span className="text-xs font-mono font-black text-rose-400">{riskPerShare.toFixed(2)}%</span>
-             </div>
-             <div className="flex justify-between items-center">
-                <span className="text-[9px] text-[var(--text-muted)] font-bold uppercase">Exposure/Capital</span>
-                <span className="text-xs font-mono font-black text-[var(--cyan-400)]">{portfolioWeight.toFixed(1)}%</span>
-             </div>
-          </div>
-        </div>
-
-        {/* Col 2: Strategy Controls */}
-        <div className="p-5 lg:col-span-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Strategy Configuration</h3>
-            <div className="flex items-center gap-2">
-              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${rr >= 2 ? 'bg-[var(--cyan-dim)] text-[var(--cyan-400)]' : 'bg-rose-500/10 text-rose-400'}`}>
-                {rr >= 2 ? 'High Quality RR' : 'Sub-Optimal RR'}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-[var(--bg-raised)]/50 p-1 rounded-xl border border-[var(--border)]">
-              {(['POINTS', 'PERCENT'] as const).map(m => (
-                <button 
+          {/* Trade Mode */}
+          <div>
+            <div className="text-[10px] text-[var(--text-muted)] uppercase font-semibold mb-2">Trade Mode</div>
+            <div className="grid grid-cols-2 gap-2">
+              {(['INTRADAY', 'DELIVERY'] as const).map(m => (
+                <button
                   key={m}
-                  onClick={() => { setSlMode(m); setSlValue(0); }}
-                  className={`flex-1 py-1.5 rounded-lg text-[9px] font-black transition-all ${slMode === m ? 'bg-slate-800 text-white shadow-inner' : 'text-[var(--text-muted)]'}`}
+                  onClick={() => setMode(m)}
+                  className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${
+                    mode === m
+                      ? 'bg-[var(--cyan-600)] text-white border-[var(--cyan-600)]'
+                      : 'bg-[var(--bg-raised)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-secondary)]'
+                  }`}
                 >
-                  SL IN {m}
+                  {m === 'INTRADAY' ? 'Intraday (5×)' : 'Delivery (1×)'}
                 </button>
               ))}
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-6 items-end">
-              <div className="space-y-2">
-                <label className="text-[10px] text-rose-400 font-black uppercase tracking-widest block">Stop Loss Value</label>
-                <div className="relative group">
-                  <input 
-                    type="number" 
-                    value={slValue || ''}
-                    onChange={(e) => setSlValue(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[#020617] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-3xl font-mono font-black text-rose-400 outline-none focus:border-rose-500/50 shadow-inner"
-                    placeholder="0.0"
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold uppercase">{slMode === 'POINTS' ? 'PTS' : '%'}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="bg-[var(--bg-raised)]/80 rounded-xl p-4 border border-[var(--border)] shadow-inner">
-                  <div className="text-[8px] text-[var(--text-muted)] uppercase font-black tracking-[0.2em] mb-2">Exit Price (SL)</div>
-                  <div className="text-2xl font-mono font-black text-white tracking-tighter">₹{effectiveStopLossPrice.toLocaleString()}</div>
-                  <div className="text-[9px] text-rose-500 font-bold uppercase mt-1">Loss: ₹{(entryPrice - effectiveStopLossPrice).toFixed(2)} / Share</div>
-                </div>
-              </div>
+          {/* Quick metrics */}
+          <div className="rounded-lg border border-[var(--border)] divide-y divide-[var(--border)]">
+            <div className="flex justify-between items-center px-3 py-2">
+              <span className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">Risk/Share</span>
+              <span className="text-[11px] font-mono font-bold text-[var(--rose-400)]">{riskPerShare.toFixed(2)}%</span>
             </div>
-
-            {/* P&L Bar */}
-            <div className="pt-4 space-y-2">
-              <div className="flex justify-between text-[9px] font-black uppercase text-[var(--text-muted)] px-1">
-                 <span>Risk: ₹{stats?.maxRiskAmount.toLocaleString()}</span>
-                 <span className="tracking-[0.3em] opacity-40">P&L Objective</span>
-                 <span className="text-[var(--cyan-400)]">Reward: 1:{rr.toFixed(1)}</span>
-              </div>
-              <div className="h-3 bg-slate-950 rounded-full border border-[var(--border)] overflow-hidden flex">
-                 <div className="h-full bg-rose-500/40" style={{ width: '30%' }} />
-                 <div className="h-full bg-blue-500/20 w-1" />
-                 <div className="h-full bg-emerald-500/40 flex-1" />
-              </div>
+            <div className="flex justify-between items-center px-3 py-2">
+              <span className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">Capital Used</span>
+              <span className="text-[11px] font-mono font-bold text-[var(--cyan-400)]">{portfolioWeight.toFixed(1)}%</span>
             </div>
           </div>
         </div>
 
-        {/* Col 3: Execution Desk */}
-        <div className="p-4 bg-[var(--bg-raised)] space-y-4 lg:col-span-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Execution Desk</h3>
-            <span className="text-[9px] font-black text-[var(--cyan-400)] font-mono">{riskPercent}% ACCOUNT RISK</span>
+        {/* ── Col 2: Stop Loss Configuration (5/12) ── */}
+        <div className="p-5 space-y-5 lg:col-span-5">
+          <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest">Stop Loss Strategy</div>
+
+          {/* SL Mode toggle */}
+          <div className="flex gap-1 bg-[var(--bg-deep)] rounded-lg p-0.5 border border-[var(--border)]">
+            {(['POINTS', 'PERCENT'] as const).map(m => (
+              <button
+                key={m}
+                onClick={() => { setSlMode(m); setSlValue(0); }}
+                className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-colors ${
+                  slMode === m ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                }`}
+              >
+                SL in {m === 'POINTS' ? 'Points' : 'Percent'}
+              </button>
+            ))}
           </div>
 
-          <div className="bg-[#020617] border border-[var(--border-md)] rounded-2xl p-6 text-center shadow-inner relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500/30 group-hover:bg-blue-500 transition-all" />
-            <div className="text-[var(--text-muted)] text-[9px] uppercase font-black tracking-[0.3em] mb-1">Buy Quantity</div>
-            <div className="text-6xl font-black text-white tracking-tighter leading-none my-2">{stats?.units || 0}</div>
-            <div className="text-[9px] font-bold text-[var(--cyan-400)] bg-[var(--cyan-dim)] px-2 py-0.5 rounded-full inline-block uppercase">Portfolio Units</div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="bg-[var(--bg-raised)]/50 rounded-xl p-3 border border-[var(--border)] space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-bold uppercase">
-                <span className="text-[var(--text-muted)]">Position Value</span>
-                <span className="text-white font-mono">₹{stats?.positionValue.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-[10px] font-bold uppercase">
-                <span className="text-[var(--text-muted)]">Margin Required</span>
-                <span className="text-[var(--cyan-400)] font-mono">₹{stats?.requiredMargin.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-[10px] font-bold uppercase border-t border-[var(--border)] pt-2 mt-1">
-                <span className="text-[var(--text-muted)]">Max Wallet Exposure</span>
-                <span className="text-amber-400 font-mono">{portfolioWeight.toFixed(1)}%</span>
+          <div className="grid grid-cols-2 gap-4">
+            {/* SL input */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-[var(--rose-400)] font-bold uppercase tracking-wide block">Stop Loss</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={slValue || ''}
+                  onChange={(e) => setSlValue(parseFloat(e.target.value) || 0)}
+                  className="sp-input w-full rounded-lg px-4 py-3 text-2xl font-mono font-bold text-[var(--rose-400)] outline-none"
+                  placeholder="0.0"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[var(--text-faint)] font-semibold uppercase">
+                  {slMode === 'POINTS' ? 'pts' : '%'}
+                </span>
               </div>
             </div>
 
-            <div className="bg-blue-500/5 rounded-xl p-3 border border-blue-500/10">
-               <div className="text-[8px] font-black text-[var(--cyan-500)] uppercase mb-2">Buying Power Efficiency</div>
-               <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, portfolioWeight)}%` }} />
-               </div>
+            {/* SL exit price */}
+            <div className="space-y-1.5">
+              <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wide">Exit Price</div>
+              <div className="bg-[var(--bg-raised)] border border-[var(--border)] rounded-lg px-4 py-3">
+                <div className="text-2xl font-mono font-bold text-[var(--text-primary)]">
+                  ₹{effectiveStopLossPrice > 0 ? effectiveStopLossPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}
+                </div>
+                {entryPrice > 0 && effectiveStopLossPrice > 0 && (
+                  <div className="text-[10px] text-[var(--rose-400)] font-semibold mt-1">
+                    −₹{(entryPrice - effectiveStopLossPrice).toFixed(2)} / share
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* P&L bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase px-0.5">
+              <span className="text-[var(--rose-400)]">−₹{totalRiskAmt.toLocaleString()}</span>
+              <span className="text-[var(--text-faint)] tracking-widest">P&L Range</span>
+              <span className="text-[var(--cyan-400)]">+₹{totalRewardAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            </div>
+            <div className="w-full h-2 bg-[var(--bg-deep)] rounded-full overflow-hidden border border-[var(--border)] flex">
+              <div className="h-full bg-[var(--rose-600)]/50 transition-all duration-500"
+                style={{ width: `${totalRiskAmt + totalRewardAmt > 0 ? Math.min(50, (totalRiskAmt / (totalRiskAmt + totalRewardAmt)) * 100) : 50}%` }} />
+              <div className="h-full bg-[var(--cyan-600)]/50 transition-all duration-500 flex-1" />
+            </div>
+          </div>
+
+          {/* Risk metrics */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'R:R', value: rr > 0 ? `1:${rr.toFixed(1)}` : '—', color: rr >= 2 ? 'text-[var(--cyan-400)]' : rr > 0 ? 'text-amber-400' : 'text-[var(--text-muted)]' },
+              { label: 'Margin', value: stats ? `₹${stats.requiredMargin.toLocaleString()}` : '—', color: 'text-[var(--cyan-400)]' },
+              { label: 'Max Loss', value: stats ? `₹${totalRiskAmt.toLocaleString()}` : '—', color: 'text-[var(--rose-400)]' },
+            ].map(m => (
+              <div key={m.label} className="bg-[var(--bg-raised)] rounded-lg p-2.5 border border-[var(--border)] text-center">
+                <div className="text-[9px] text-[var(--text-muted)] uppercase font-semibold mb-1">{m.label}</div>
+                <div className={`text-[11px] font-mono font-bold ${m.color}`}>{m.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Col 3: Execution Desk (4/12) ── */}
+        <div className="p-5 space-y-4 lg:col-span-4 bg-[var(--bg-raised)]">
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest">Execution</div>
+            <span className="text-[10px] font-bold font-mono text-[var(--cyan-400)]">{riskPercent}% acct risk</span>
+          </div>
+
+          {/* Position size hero */}
+          <div className="bg-[var(--bg-deep)] border border-[var(--border-md)] rounded-xl p-6 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-[var(--cyan-600)]" />
+            <div className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-widest mb-1">Shares to Buy</div>
+            <div className="text-6xl font-black text-[var(--text-primary)] tracking-tighter leading-none my-2">
+              {stats?.units || 0}
+            </div>
+            <div className="tag tag-cyan mt-1">Portfolio Units</div>
+          </div>
+
+          {/* Stats grid */}
+          <div className="rounded-lg border border-[var(--border)] divide-y divide-[var(--border)]">
+            {[
+              { label: 'Position Value', value: stats ? `₹${stats.positionValue.toLocaleString()}` : '—', color: 'text-[var(--text-primary)]' },
+              { label: 'Margin Required', value: stats ? `₹${stats.requiredMargin.toLocaleString()}` : '—', color: 'text-[var(--cyan-400)]' },
+              { label: 'Wallet Exposure', value: `${portfolioWeight.toFixed(1)}%`, color: portfolioWeight > 50 ? 'text-[var(--rose-400)]' : 'text-[var(--text-secondary)]' },
+            ].map(item => (
+              <div key={item.label} className="flex justify-between items-center px-3 py-2.5">
+                <span className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">{item.label}</span>
+                <span className={`text-[11px] font-mono font-bold ${item.color}`}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Capital usage bar */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+              <span>Capital Usage</span>
+              <span className="text-[var(--cyan-400)]">{portfolioWeight.toFixed(1)}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-[var(--bg-deep)] rounded-full overflow-hidden border border-[var(--border)]">
+              <div
+                className="h-full bg-[var(--cyan-600)] transition-all duration-500"
+                style={{ width: `${Math.min(100, portfolioWeight)}%` }}
+              />
             </div>
           </div>
         </div>

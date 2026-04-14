@@ -200,250 +200,285 @@ function App() {
 
       {/* ── Main Layout ── */}
       <div className="w-full max-w-[1760px] mx-auto px-5 py-5">
-        <div className="grid grid-cols-12 gap-4">
+        {activeAsset === 'OPTIONS' ? (
 
-          {/* ── Left Sidebar ── */}
-          <div className="col-span-12 lg:col-span-3 space-y-4">
+          /* ─────── OPTIONS: Sidebar + Workspace ─────── */
+          <div className="grid grid-cols-12 gap-4">
 
-            {/* Symbol & Expiry controls */}
-            <div className={`card p-4 space-y-5 transition-all duration-300 ${activeAsset !== 'OPTIONS' ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-1 h-4 rounded-full bg-[var(--cyan-500)]" />
-                <h2 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Options Setup</h2>
-              </div>
+            {/* Left sidebar — options-specific */}
+            <div className="col-span-12 lg:col-span-3 space-y-4">
 
-              <Header
-                underlyings={underlyings}
-                selectedUnderlying={selectedUnderlying}
-                onUnderlyingChange={setSelectedUnderlying}
-                expiries={expiries}
-                selectedExpiry={selectedExpiry}
-                onExpiryChange={setSelectedExpiry}
-                autoRefresh={autoRefresh}
-                onAutoRefreshChange={onAutoRefreshChange}
-                onRefresh={refresh}
-              />
+              {/* Options Setup */}
+              <div className="card p-4 space-y-5">
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-[var(--cyan-500)]" />
+                  <h2 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Options Setup</h2>
+                </div>
 
-              {optionChain && (
-                <div className="pt-4 border-t border-[var(--border)]">
-                  <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3">Underlying</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border)]">
-                      <span className="block text-[10px] text-[var(--text-muted)] uppercase font-semibold mb-1">Spot</span>
-                      <div className="text-lg font-black font-mono text-white">
-                        {optionChain.spotLTP.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                <Header
+                  underlyings={underlyings}
+                  selectedUnderlying={selectedUnderlying}
+                  onUnderlyingChange={setSelectedUnderlying}
+                  expiries={expiries}
+                  selectedExpiry={selectedExpiry}
+                  onExpiryChange={setSelectedExpiry}
+                  autoRefresh={autoRefresh}
+                  onAutoRefreshChange={onAutoRefreshChange}
+                  onRefresh={refresh}
+                />
+
+                {optionChain && (
+                  <div className="pt-4 border-t border-[var(--border)]">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border)]">
+                        <span className="block text-[10px] text-[var(--text-muted)] uppercase font-semibold mb-1">Spot</span>
+                        <div className="text-lg font-black font-mono text-[var(--text-primary)]">
+                          {optionChain.spotLTP.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </div>
                       </div>
-                    </div>
-                    <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border)]">
-                      <span className="block text-[10px] text-[var(--text-muted)] uppercase font-semibold mb-1">Lot Size</span>
-                      <div className="text-lg font-black font-mono text-white">
-                        {optionChain.lotsize}
+                      <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border)]">
+                        <span className="block text-[10px] text-[var(--text-muted)] uppercase font-semibold mb-1">Lot Size</span>
+                        <div className="text-lg font-black font-mono text-[var(--text-primary)]">
+                          {optionChain.lotsize}
+                        </div>
                       </div>
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* Risk Settings */}
+              <div className="card p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1 h-4 rounded-full bg-[var(--rose-500)]" />
+                    <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Risk Settings</h3>
+                  </div>
+                  <span className="tag tag-cyan">Protected</span>
                 </div>
-              )}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[var(--text-secondary)] text-[11px] font-semibold mb-2 uppercase tracking-wide">
+                      Available Capital
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={capital}
+                        onChange={(e) => setCapital(parseFloat(e.target.value) || 0)}
+                        className="sp-input w-full rounded-lg pl-7 pr-3 py-2.5 text-sm font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-[var(--text-secondary)] text-[11px] font-semibold uppercase tracking-wide">Risk / Trade</label>
+                      <span className="text-sm font-black font-mono text-[var(--rose-400)]">{riskPercent}%</span>
+                    </div>
+                    <input
+                      type="range" min="0.1" max="10" step="0.1" value={riskPercent}
+                      onChange={(e) => setRiskPercent(parseFloat(e.target.value))}
+                      className="w-full accent-[var(--cyan-500)]"
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-faint)] font-medium mt-1">
+                      <span>0.1%</span><span>10%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Risk Settings */}
-            <div className="card p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-1 h-4 rounded-full bg-[var(--rose-500)]" />
-                  <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Risk Settings</h3>
-                </div>
-                <span className="tag tag-cyan">Protected</span>
-              </div>
+            {/* Main workspace */}
+            <div className="col-span-12 lg:col-span-9 space-y-4">
+              <div key="options" className="animate-in fade-in duration-300">
+                <PositionCalculator
+                  capital={capital}
+                  riskPercent={riskPercent}
+                  stopLoss={stopLoss}
+                  onStopLossChange={setStopLoss}
+                  optionChain={optionChain}
+                  selectedStrike={selectedStrike}
+                  selectedOptionType={selectedOptionType}
+                  setSelectedOptionType={setSelectedOptionType}
+                  selectedExpiry={selectedExpiry}
+                />
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[var(--text-secondary)] text-[11px] font-semibold mb-2 uppercase tracking-wide">
-                    Available Capital
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm font-bold">₹</span>
-                    <input
-                      type="number"
-                      value={capital}
-                      onChange={(e) => setCapital(parseFloat(e.target.value) || 0)}
-                      className="sp-input w-full rounded-lg pl-7 pr-3 py-2.5 text-sm font-mono font-bold"
-                    />
-                  </div>
-                </div>
+                {/* Option Chain card */}
+                <div className="card overflow-hidden mt-4">
+                  <div className="px-4 py-3 border-b border-[var(--border)] flex flex-wrap items-center gap-3 bg-[var(--bg-raised)]">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1 h-4 rounded-full bg-[var(--cyan-500)]" />
+                      <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Option Chain</h3>
+                    </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-[var(--text-secondary)] text-[11px] font-semibold uppercase tracking-wide">Risk / Trade</label>
-                    <span className="text-sm font-black font-mono text-[var(--rose-400)]">{riskPercent}%</span>
+                    <div className="h-4 w-px bg-[var(--border)] mx-1" />
+
+                    <button
+                      onClick={() => setIsReversed(!isReversed)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold uppercase transition-colors ${
+                        isReversed
+                          ? 'bg-[var(--cyan-dim)] text-[var(--cyan-400)] border border-[var(--border-cyan)]'
+                          : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      <svg className={`w-3 h-3 transition-transform ${isReversed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                      {isReversed ? 'Desc' : 'Asc'}
+                    </button>
+
+                    <div className="flex items-center gap-0.5 bg-[var(--bg-deep)] rounded p-0.5 border border-[var(--border)]">
+                      {[10, 15, 20, 30].map(depth => (
+                        <button
+                          key={depth}
+                          onClick={() => setStrikeDepth(depth)}
+                          className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
+                            strikeDepth === depth
+                              ? 'bg-[var(--cyan-600)] text-white'
+                              : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                          }`}
+                        >
+                          ±{depth}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const row = document.querySelector('.active-row') || document.querySelector('[data-atm="true"]');
+                        row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-[var(--bg-deep)] text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--cyan-400)] hover:border-[var(--border-cyan)] transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      ATM
+                    </button>
+
+                    <div className="flex items-center gap-0.5 bg-[var(--bg-deep)] rounded p-0.5 border border-[var(--border)] ml-auto">
+                      {(['table', 'profile'] as const).map(vm => (
+                        <button
+                          key={vm}
+                          onClick={() => setViewMode(vm)}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded text-[10px] font-bold transition-colors capitalize ${
+                            viewMode === vm ? 'bg-[var(--cyan-600)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                          }`}
+                        >
+                          {vm === 'table' ? (
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                          )}
+                          {vm.charAt(0).toUpperCase() + vm.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+
+                    {error && (
+                      <span className="flex items-center gap-1 text-[var(--rose-400)] text-[10px] font-bold uppercase">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {error}
+                      </span>
+                    )}
+                    {loading && (
+                      <span className="flex items-center gap-1.5 text-[var(--cyan-400)] text-[10px] font-bold uppercase">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--cyan-400)] animate-ping" />
+                        Syncing
+                      </span>
+                    )}
                   </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="10"
-                    step="0.1"
-                    value={riskPercent}
-                    onChange={(e) => setRiskPercent(parseFloat(e.target.value))}
-                    className="w-full accent-[var(--cyan-500)]"
-                  />
-                  <div className="flex justify-between text-[10px] text-[var(--text-faint)] font-medium mt-1">
-                    <span>0.1%</span><span>10%</span>
+
+                  <div className="max-h-[620px] overflow-y-auto premium-scroll">
+                    {optionChain ? (
+                      viewMode === 'table' ? (
+                        <OptionChain
+                          strikes={optionChain.strikes}
+                          atmStrike={atmStrike}
+                          selectedStrike={selectedStrike}
+                          onSelectStrike={(strike, type) => {
+                            setSelectedStrike(strike);
+                            if (type) setSelectedOptionType(type);
+                          }}
+                          isReversed={isReversed}
+                          strikeDepth={strikeDepth}
+                          spotPrice={optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP}
+                          expiryDate={selectedExpiry}
+                        />
+                      ) : (
+                        <OIProfile
+                          data={optionChain}
+                          isReversed={isReversed}
+                          strikeDepth={strikeDepth}
+                          atmStrike={atmStrike}
+                        />
+                      )
+                    ) : (
+                      <div className="h-[400px] flex flex-col items-center justify-center gap-4 text-[var(--text-muted)]">
+                        <div className="w-10 h-10 rounded-full border-2 border-dashed border-[var(--border-md)] animate-spin" />
+                        <p className="text-sm font-medium">Loading exchange data…</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ── Main Workspace ── */}
-          <div className="col-span-12 lg:col-span-9 space-y-4">
-            <div key={activeAsset} className="animate-in fade-in duration-300">
-              {activeAsset === 'OPTIONS' ? (
-                <>
-                  <PositionCalculator
-                    capital={capital}
-                    riskPercent={riskPercent}
-                    stopLoss={stopLoss}
-                    onStopLossChange={setStopLoss}
-                    optionChain={optionChain}
-                    selectedStrike={selectedStrike}
-                    selectedOptionType={selectedOptionType}
-                    setSelectedOptionType={setSelectedOptionType}
-                    selectedExpiry={selectedExpiry}
+        ) : (
+
+          /* ─────── EQUITY / CRYPTO / FOREX: Full-width + compact settings bar ─────── */
+          <div className="space-y-4">
+
+            {/* Compact global settings bar */}
+            <div className="card px-5 py-3 flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="w-1 h-4 rounded-full bg-[var(--rose-500)]" />
+                <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Risk Settings</span>
+              </div>
+
+              {/* Capital */}
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">Capital</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm font-bold">₹</span>
+                  <input
+                    type="number"
+                    value={capital}
+                    onChange={(e) => setCapital(parseFloat(e.target.value) || 0)}
+                    className="sp-input rounded-lg pl-6 pr-3 py-1.5 text-sm font-mono font-bold w-36"
                   />
+                </div>
+              </div>
 
-                  {/* Option Chain card */}
-                  <div className="card overflow-hidden">
-                    {/* Chain toolbar */}
-                    <div className="px-4 py-3 border-b border-[var(--border)] flex flex-wrap items-center gap-3 bg-[var(--bg-raised)]">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1 h-4 rounded-full bg-[var(--cyan-500)]" />
-                        <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Option Chain</h3>
-                      </div>
+              <div className="h-5 w-px bg-[var(--border-md)]" />
 
-                      <div className="h-4 w-px bg-[var(--border)] mx-1" />
+              {/* Risk % */}
+              <div className="flex items-center gap-3 flex-1 min-w-[220px] max-w-xs">
+                <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">Risk / Trade</label>
+                <input
+                  type="range" min="0.1" max="10" step="0.1" value={riskPercent}
+                  onChange={(e) => setRiskPercent(parseFloat(e.target.value))}
+                  className="flex-1 accent-[var(--cyan-500)]"
+                />
+                <span className="text-sm font-black font-mono text-[var(--rose-400)] w-10 text-right">{riskPercent}%</span>
+              </div>
 
-                      {/* Sort direction */}
-                      <button
-                        onClick={() => setIsReversed(!isReversed)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold uppercase transition-colors ${
-                          isReversed
-                            ? 'bg-[var(--cyan-dim)] text-[var(--cyan-400)] border border-[var(--border-cyan)]'
-                            : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text-secondary)]'
-                        }`}
-                      >
-                        <svg className={`w-3 h-3 transition-transform ${isReversed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                        </svg>
-                        {isReversed ? 'Desc' : 'Asc'}
-                      </button>
+              <div className="ml-auto">
+                <span className="tag tag-cyan">Protected</span>
+              </div>
+            </div>
 
-                      {/* Depth selector */}
-                      <div className="flex items-center gap-0.5 bg-[var(--bg-deep)] rounded p-0.5 border border-[var(--border)]">
-                        {[10, 15, 20, 30].map(depth => (
-                          <button
-                            key={depth}
-                            onClick={() => setStrikeDepth(depth)}
-                            className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
-                              strikeDepth === depth
-                                ? 'bg-[var(--cyan-600)] text-white'
-                                : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
-                            }`}
-                          >
-                            ±{depth}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Center ATM */}
-                      <button
-                        onClick={() => {
-                          const row = document.querySelector('.active-row') || document.querySelector('[data-atm="true"]');
-                          row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-[var(--bg-deep)] text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--cyan-400)] hover:border-[var(--border-cyan)] transition-colors"
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        ATM
-                      </button>
-
-                      {/* View mode */}
-                      <div className="flex items-center gap-0.5 bg-[var(--bg-deep)] rounded p-0.5 border border-[var(--border)] ml-auto">
-                        <button
-                          onClick={() => setViewMode('table')}
-                          className={`flex items-center gap-1.5 px-3 py-1 rounded text-[10px] font-bold transition-colors ${
-                            viewMode === 'table' ? 'bg-[var(--cyan-600)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
-                          }`}
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          Table
-                        </button>
-                        <button
-                          onClick={() => setViewMode('profile')}
-                          className={`flex items-center gap-1.5 px-3 py-1 rounded text-[10px] font-bold transition-colors ${
-                            viewMode === 'profile' ? 'bg-[var(--cyan-600)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
-                          }`}
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
-                          Profile
-                        </button>
-                      </div>
-
-                      {/* Status indicators */}
-                      {error && (
-                        <span className="flex items-center gap-1 text-[var(--rose-400)] text-[10px] font-bold uppercase">
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          {error}
-                        </span>
-                      )}
-                      {loading && (
-                        <span className="flex items-center gap-1.5 text-[var(--cyan-400)] text-[10px] font-bold uppercase">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[var(--cyan-400)] animate-ping" />
-                          Syncing
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="max-h-[620px] overflow-y-auto premium-scroll">
-                      {optionChain ? (
-                        viewMode === 'table' ? (
-                          <OptionChain
-                            strikes={optionChain.strikes}
-                            atmStrike={atmStrike}
-                            selectedStrike={selectedStrike}
-                            onSelectStrike={(strike, type) => {
-                              setSelectedStrike(strike);
-                              if (type) setSelectedOptionType(type);
-                            }}
-                            isReversed={isReversed}
-                            strikeDepth={strikeDepth}
-                            spotPrice={optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP}
-                            expiryDate={selectedExpiry}
-                          />
-                        ) : (
-                          <OIProfile
-                            data={optionChain}
-                            isReversed={isReversed}
-                            strikeDepth={strikeDepth}
-                            atmStrike={atmStrike}
-                          />
-                        )
-                      ) : (
-                        <div className="h-[400px] flex flex-col items-center justify-center gap-4 text-[var(--text-muted)]">
-                          <div className="w-10 h-10 rounded-full border-2 border-dashed border-[var(--border-md)] animate-spin" />
-                          <p className="text-sm font-medium">Loading exchange data…</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : activeAsset === 'EQUITY' ? (
+            {/* Full-width terminal */}
+            <div key={activeAsset} className="animate-in fade-in duration-300">
+              {activeAsset === 'EQUITY' ? (
                 <EquityTerminal capital={capital} riskPercent={riskPercent} />
               ) : activeAsset === 'CRYPTO' ? (
                 <CryptoTerminal capital={capital} riskPercent={riskPercent} />
@@ -452,7 +487,7 @@ function App() {
               )}
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

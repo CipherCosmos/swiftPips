@@ -39,14 +39,24 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
 
   return (
     <div className="card overflow-hidden">
+      {/* Header bar */}
+      <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-raised)] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-1 h-4 rounded-full bg-[var(--rose-500)]" />
+          <h2 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Forex Lot Sizer</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`tag ${rr >= 2 ? 'tag-cyan' : rr > 0 ? 'tag-rose' : 'tag-rose'}`}>
+            {rr > 0 ? `R:R  1:${rr.toFixed(1)}` : 'No RR'}
+          </span>
+          <span className="tag tag-rose">Forex</span>
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[var(--border)]">
         
         {/* Col 1: Currency Intelligence */}
         <div className="p-4 space-y-4 bg-[var(--bg-raised)] lg:col-span-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">FX Intelligence</h3>
-            <div className="px-2 py-0.5 rounded bg-rose-500/10 text-[9px] font-black text-rose-500 uppercase tracking-widest">Forex Desk</div>
-          </div>
+          <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest">FX Setup</div>
 
           <div className="space-y-3">
             <div>
@@ -55,7 +65,7 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                 type="text" 
                 value={pair}
                 onChange={(e) => setPair(e.target.value.toUpperCase())}
-                className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] rounded-lg px-3 py-2 text-sm font-black text-white focus:border-rose-500/50 outline-none"
+                className="w-full bg-[var(--bg-raised)] border border-[var(--border-md)] rounded-lg px-3 py-2 text-sm font-black text-white focus:border-[var(--border-rose)] outline-none"
               />
             </div>
 
@@ -66,7 +76,7 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                   <button 
                     key={t}
                     onClick={() => setLotType(t)}
-                    className={`py-1.5 rounded-md text-[9px] font-black uppercase transition-all ${lotType === t ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/40' : 'bg-[var(--bg-raised)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
+                    className={`py-1.5 rounded-md text-[9px] font-black uppercase transition-all ${lotType === t ? 'bg-rose-600 text-white shadow-lg ' : 'bg-[var(--bg-raised)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
                   >
                     {t}
                   </button>
@@ -85,7 +95,7 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                     className="w-full bg-transparent text-xl font-mono font-black text-white outline-none"
                   />
                </div>
-               <div className="text-[8px] text-slate-600 font-bold uppercase italic leading-tight">
+               <div className="text-[8px] text-[var(--text-faint)] font-bold uppercase italic leading-tight">
                   EURUSD/GBPUSD ≈ $10<br/>USDJPY/AUDUSD ≈ $8-12
                </div>
             </div>
@@ -106,8 +116,8 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
         {/* Col 2: Lot Configuration */}
         <div className="p-5 lg:col-span-6 space-y-6">
           <div className="flex items-center justify-between text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-            <h3>Pip & Lot Strategy</h3>
-            <span className="text-rose-500 font-black">Broker Leverage: 1:{leverage}</span>
+            <div>Pip & Lot Strategy</div>
+            <span className="tag tag-rose">Leverage 1:{leverage}</span>
           </div>
 
           <div className="space-y-6">
@@ -119,7 +129,7 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                     type="number" 
                     value={stopLossPips || ''}
                     onChange={(e) => setStopLossPips(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[#020617] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-3xl font-mono font-black text-rose-400 outline-none focus:border-rose-500/50 shadow-inner"
+                    className="w-full bg-[var(--bg-deep)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-3xl font-mono font-black text-rose-400 outline-none focus:border-[var(--border-rose)] shadow-inner"
                     placeholder="0.0"
                   />
                 </div>
@@ -132,7 +142,7 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                     type="number" 
                     value={targetPips || ''}
                     onChange={(e) => setTargetPips(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[#020617] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-3xl font-mono font-black text-[var(--cyan-400)] outline-none focus:border-emerald-500/50 shadow-inner"
+                    className="w-full bg-[var(--bg-deep)] border border-[var(--border-md)] group-hover:border-[var(--border-md)] rounded-xl px-4 py-3 text-3xl font-mono font-black text-[var(--cyan-400)] outline-none focus:border-[var(--border-cyan)] shadow-inner"
                     placeholder="0.0"
                   />
                 </div>
@@ -144,7 +154,7 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
                   <span>Margin Context (Leverage)</span>
                   <div className="flex gap-2">
                      {[100, 200, 500].map(l => (
-                        <button key={l} onClick={()=>setLeverage(l)} className={`px-2 py-0.5 rounded text-[8px] font-black ${leverage === l ? 'bg-rose-500 text-white' : 'bg-slate-800 text-[var(--text-muted)]'}`}>1:{l}</button>
+                        <button key={l} onClick={()=>setLeverage(l)} className={`px-2 py-0.5 rounded text-[8px] font-black ${leverage === l ? 'bg-[var(--rose-600)] text-white' : 'bg-[var(--bg-raised)] text-[var(--text-muted)]'}`}>1:{l}</button>
                      ))}
                   </div>
                </div>
@@ -177,47 +187,29 @@ export function ForexTerminal({ capital, riskPercent }: ForexTerminalProps) {
         {/* Col 3: Execution Panel */}
         <div className="p-4 bg-[var(--bg-raised)] space-y-4 lg:col-span-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Institutional Desk</h3>
-            <span className="text-[8px] font-bold text-rose-500 font-mono bg-rose-500/10 px-1.5 py-0.5 rounded uppercase">Verified</span>
+            <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Execution</div>
+            <span className="tag tag-rose">Forex Desk</span>
           </div>
 
-          <div className="bg-[#020617] border border-[var(--border-md)] rounded-2xl p-6 text-center shadow-inner relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-1 bg-rose-500/30 group-hover:bg-rose-500 transition-all" />
-            <div className="text-[var(--text-muted)] text-[9px] uppercase font-black tracking-[0.3em] mb-1">Lots to Execute</div>
-            <div className="text-6xl font-black text-white tracking-tighter leading-none my-2">{stats?.units || 0}</div>
-            <div className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-3 py-1 rounded-full inline-block uppercase mt-2">
-              {lotType} UNITS
-            </div>
+          <div className="bg-[var(--bg-deep)] border border-[var(--border-md)] rounded-xl p-6 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-[var(--rose-600)]" />
+            <div className="text-[var(--text-muted)] text-[10px] uppercase font-bold tracking-widest mb-1">Lots to Execute</div>
+            <div className="text-6xl font-black text-[var(--text-primary)] tracking-tighter leading-none my-2">{stats?.units || 0}</div>
+            <div className="tag tag-rose mt-1">{lotType}</div>
           </div>
 
-          <div className="space-y-3">
-            <div className="bg-[var(--bg-raised)]/50 rounded-xl p-3 border border-[var(--border)] space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                <span className="text-[var(--text-muted)]">Notional exposure</span>
-                <span className="text-white font-mono">${exposureBase.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                <span className="text-[var(--text-muted)]">Required Margin</span>
-                <span className="text-rose-400 font-mono">${marginRequired.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-              </div>
-              <div className="flex justify-between items-center text-[10px] font-black uppercase pt-2 border-t border-[var(--border)] mt-1">
-                <span className="text-[var(--text-muted)]">Account Utility</span>
-                <span className="text-white font-mono">{((marginRequired / (capital || 1)) * 100).toFixed(2)}%</span>
-              </div>
+          <div className="rounded-lg border border-[var(--border)] divide-y divide-[var(--border)]">
+            <div className="flex justify-between items-center px-3 py-2.5 text-[10px] font-semibold uppercase">
+              <span className="text-[var(--text-muted)]">Notional Exposure</span>
+              <span className="text-[var(--text-primary)] font-mono">${exposureBase.toLocaleString()}</span>
             </div>
-
-            <div className="bg-rose-500/5 rounded-xl p-3 border border-rose-500/10">
-               <div className="text-[8px] font-black text-rose-500 uppercase mb-2">Liquidity Score</div>
-               <div className="flex justify-around items-center">
-                  <div className="text-center">
-                     <div className="text-[7px] text-slate-600 font-bold uppercase">Depth</div>
-                     <div className="text-[var(--cyan-500)] font-black">HIGH</div>
-                  </div>
-                  <div className="text-center border-l border-[var(--border)] pl-4">
-                     <div className="text-[7px] text-slate-600 font-bold uppercase">Volatility</div>
-                     <div className="text-amber-400 font-black">MED</div>
-                  </div>
-               </div>
+            <div className="flex justify-between items-center px-3 py-2.5 text-[10px] font-semibold uppercase">
+              <span className="text-[var(--text-muted)]">Required Margin</span>
+              <span className="text-[var(--rose-400)] font-mono">${marginRequired.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between items-center px-3 py-2.5 text-[10px] font-semibold uppercase">
+              <span className="text-[var(--text-muted)]">Account Utility</span>
+              <span className="text-[var(--text-primary)] font-mono">{((marginRequired / (capital || 1)) * 100).toFixed(2)}%</span>
             </div>
           </div>
         </div>

@@ -115,7 +115,7 @@ function App() {
                   type="password"
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleTokenSubmit()}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleTokenSubmit(); } }}
                   placeholder="Enter your Bearer token"
                   className="sp-input w-full px-3.5 py-2.5 text-sm rounded-lg"
                 />

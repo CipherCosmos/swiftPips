@@ -2,8 +2,8 @@
 
 /* ── SwiftPips Design System ───────────────────────────────────────
    Color palette: 2 accent colors only
-     • Cyan  (#06B6D4 / #22D3EE) — primary, live, profit, call side
-     • Rose  (#F43F5E / #FB7185) — danger, loss, stop, put side
+     • Cyan  (#06B6D4 = --cyan-500 / #22D3EE = --cyan-400) — primary, live, profit, call side
+     • Rose  (#F43F5E = --rose-500 / #FB7185 = --rose-400) — danger, loss, stop, put side
    Everything else is neutral dark charcoal + white/slate text.
 ──────────────────────────────────────────────────────────────────── */
 

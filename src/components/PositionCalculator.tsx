@@ -375,7 +375,7 @@ export function PositionCalculator({
             </div>
             <div className="w-full h-2 bg-[var(--bg-deep)] rounded-full overflow-hidden border border-[var(--border)] flex">
               <div className="h-full bg-[var(--rose-600)]/50 transition-all duration-500"
-                style={{ width: `${Math.min(50, (totalMaxLoss / (totalMaxLoss + totalMaxProfit + 0.01)) * 100)}%` }} />
+                style={{ width: `${totalMaxLoss + totalMaxProfit > 0 ? Math.min(50, (totalMaxLoss / (totalMaxLoss + totalMaxProfit)) * 100) : 50}%` }} />
               <div className="h-full bg-[var(--cyan-600)]/50 transition-all duration-500 flex-1" />
             </div>
           </div>

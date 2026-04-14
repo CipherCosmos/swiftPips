@@ -9,7 +9,6 @@ interface EquityTerminalProps {
 export function EquityTerminal({ capital, riskPercent }: EquityTerminalProps) {
   const [symbol, setSymbol] = useState('');
   const [entryPrice, setEntryPrice] = useState<number>(0);
-  const [stopLossPrice, setStopLossPrice] = useState<number>(0);
   const [targetPrice, setTargetPrice] = useState<number>(0);
   const [mode, setMode] = useState<'DELIVERY' | 'INTRADAY'>('INTRADAY');
   const [slMode, setSlMode] = useState<'POINTS' | 'PERCENT'>('POINTS');

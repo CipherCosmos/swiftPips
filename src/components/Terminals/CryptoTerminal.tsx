@@ -97,13 +97,7 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
     return stats.units * movement;
   }, [stats, targetPrice, isShort, entryPrice]);
 
-  const rr = useMemo(() => {
-    const risk = Math.abs(entryPrice - stopLossPrice);
-    const reward = Math.abs(targetPrice - entryPrice);
-    return risk > 0 ? reward / risk : 0;
-  }, [entryPrice, stopLossPrice, targetPrice]);
 
-  const riskDisplay = manualRiskAmount ?? (capital * (riskPercent / 100));
 
   return (
     <div className="glass-card overflow-hidden border-amber-500/10">
@@ -175,8 +169,8 @@ export function CryptoTerminal({ capital, riskPercent }: CryptoTerminalProps) {
              </div>
              <div className="flex justify-between items-center px-1">
                 <span className="text-[9px] text-slate-500 font-bold uppercase">Liq. Buffer</span>
-                <span className={`text-[10px] font-mono font-bold ${stats && stats.liqBuffer < 2 ? 'text-rose-500' : 'text-emerald-400'}`}>
-                  {stats?.liqBuffer ? `${stats.liqBuffer.toFixed(2)}x SL` : '---'}
+                <span className={`text-[10px] font-mono font-bold ${stats && stats.liqBuffer !== undefined && stats.liqBuffer < 2 ? 'text-rose-500' : 'text-emerald-400'}`}>
+                  {stats?.liqBuffer !== undefined ? `${stats.liqBuffer.toFixed(2)}x SL` : '---'}
                 </span>
              </div>
           </div>

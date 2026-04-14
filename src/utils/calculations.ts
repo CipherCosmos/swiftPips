@@ -193,7 +193,6 @@ export function calculateForexSizing(params: ForexSizing): SizingResult {
   // Convert to specific lot units (e.g. how many "Micro Lots")
   const units = Math.floor(totalStandardLots / lotUnit);
   const actualStandardLots = units * lotUnit;
-  const realizedRisk = actualStandardLots * stopLossPips * pipValue;
   
   // Position value in base units (Standard Lot = 100,000 units)
   const positionValue = actualStandardLots * 100000;

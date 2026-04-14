@@ -3,10 +3,15 @@ import { Header } from './components/Header';
 import { OptionChain } from './components/OptionChain';
 import { OIProfile } from './components/OIProfile';
 import { PositionCalculator } from './components/PositionCalculator';
+import { AssetClassSwitcher } from './components/AssetClassSwitcher';
+import { EquityTerminal } from './components/Terminals/EquityTerminal';
+import { CryptoTerminal } from './components/Terminals/CryptoTerminal';
+import { ForexTerminal } from './components/Terminals/ForexTerminal';
 import { useOptionChain } from './hooks/useOptionChain';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { setAuthToken, loadAuthToken, getWSSession } from './services/api';
 import { norenWS } from './services/websocket';
+import type { AssetClass } from './types/assets';
 
 function App() {
   const [capital, setCapital] = useLocalStorage('trading_capital', 100000);
@@ -18,6 +23,7 @@ function App() {
   const [isReversed, setIsReversed] = useLocalStorage('chain_reversed', false);
   const [strikeDepth, setStrikeDepth] = useLocalStorage('chain_depth', 15);
   const [viewMode, setViewMode] = useState<'table' | 'profile'>('table');
+  const [activeAsset, setActiveAsset] = useLocalStorage<AssetClass>('active_asset', 'OPTIONS');
 
   const {
     underlyings,
@@ -149,8 +155,11 @@ function App() {
                 </button>
               )}
             </div>
+            {/* </button> */}
           </div>
           
+          <AssetClassSwitcher activeAsset={activeAsset} onAssetChange={setActiveAsset} />
+
           <button
             onClick={() => {
               localStorage.removeItem('aliceblue_token');
@@ -168,7 +177,7 @@ function App() {
         <div className="grid grid-cols-12 gap-6">
           {/* Controls Column */}
           <div className="col-span-12 lg:col-span-3 space-y-6">
-            <div className="glass-card p-5 space-y-6">
+            <div className={`glass-card p-5 space-y-6 transition-all duration-500 ${activeAsset !== 'OPTIONS' ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
               <div className="space-y-4">
                 <Header
                   underlyings={underlyings}
@@ -183,209 +192,212 @@ function App() {
                 />
               </div>
 
-              <div className="pt-5 border-t border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Risk Management</h3>
-                  <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Live</div>
+              {optionChain && (
+                <div className="pt-5 border-t border-white/5">
+                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-4">Underlying Snapshot</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[11px] text-slate-500 uppercase font-bold">Spot Price</span>
+                      <div className="text-xl font-mono font-black text-white shrink-0">
+                        {optionChain.spotLTP.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[11px] text-slate-500 uppercase font-bold">Lot Size</span>
+                      <div className="text-xl font-mono font-black text-white shrink-0">
+                        {optionChain.lotsize}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-slate-400 text-xs font-bold uppercase mb-2 tracking-wide">Available Capital (₹)</label>
+              )}
+            </div>
+
+            <div className="glass-card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Global Risk Settings</h3>
+                <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${activeAsset === 'OPTIONS' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>PROTECTED</div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-slate-400 text-xs font-bold uppercase mb-2 tracking-wide">Available Capital</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
                     <input
                       type="number"
                       value={capital}
                       onChange={(e) => setCapital(parseFloat(e.target.value) || 0)}
-                      className="w-full glass-input rounded-lg px-3 py-2 text-sm outline-none"
+                      className="w-full glass-input rounded-lg pl-7 pr-3 py-2 text-sm outline-none font-mono font-black"
                     />
                   </div>
-                  <div>
-                    <label className="block text-slate-400 text-[11px] font-bold uppercase mb-2 tracking-wide">Max Risk (%)</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="0.5"
-                        max="5"
-                        step="0.5"
-                        value={riskPercent}
-                        onChange={(e) => setRiskPercent(parseFloat(e.target.value))}
-                        className="flex-1 accent-emerald-500"
-                      />
-                      <span className="text-sm font-mono font-bold text-emerald-400 w-8">{riskPercent}%</span>
-                    </div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-[11px] font-bold uppercase mb-2 tracking-wide">Risk Per Trade (%)</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="10"
+                      step="0.1"
+                      value={riskPercent}
+                      onChange={(e) => setRiskPercent(parseFloat(e.target.value))}
+                      className={`flex-1 ${activeAsset === 'OPTIONS' ? 'accent-emerald-500' : activeAsset === 'EQUITY' ? 'accent-blue-500' : activeAsset === 'CRYPTO' ? 'accent-amber-500' : 'accent-rose-500'}`}
+                    />
+                    <span className="text-sm font-mono font-bold text-white w-10">{riskPercent}%</span>
                   </div>
                 </div>
               </div>
             </div>
-
-            {optionChain && (
-              <div className="glass-card p-5 overflow-hidden relative">
-                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-4">Underlying Snapshot</h3>
-                <div className="grid grid-cols-2 gap-4 relative z-10">
-                  <div className="space-y-1">
-                    <span className="text-[11px] text-slate-500 uppercase font-bold">Spot Price</span>
-                    <div className="text-2xl font-mono font-black text-white shrink-0">
-                      {optionChain.spotLTP.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[11px] text-slate-500 uppercase font-bold">Lot Size</span>
-                    <div className="text-2xl font-mono font-black text-white shrink-0">
-                      {optionChain.lotsize}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[11px] text-slate-500 uppercase font-bold">PCR</span>
-                    <div className={`text-2xl font-mono font-black transition-colors ${optionChain.pcr > 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {optionChain.pcr.toFixed(2)}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs text-slate-500 uppercase font-bold">Auto Ref</span>
-                    <div className="text-sm font-bold text-slate-400 mt-1 capitalize tracking-wide">
-                      {autoRefresh ? 'Enabled' : 'Disabled'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Main Workspace */}
           <div className="col-span-12 lg:col-span-9 space-y-6">
-            <PositionCalculator
-              capital={capital}
-              riskPercent={riskPercent}
-              stopLoss={stopLoss}
-              onStopLossChange={setStopLoss}
-              optionChain={optionChain}
-              selectedStrike={selectedStrike}
-              selectedOptionType={selectedOptionType}
-              setSelectedOptionType={setSelectedOptionType}
-              selectedExpiry={selectedExpiry}
-            />
+            <div key={activeAsset} className="animate-in fade-in duration-500">
+              {activeAsset === 'OPTIONS' ? (
+                <>
+                  <PositionCalculator
+                    capital={capital}
+                    riskPercent={riskPercent}
+                    stopLoss={stopLoss}
+                    onStopLossChange={setStopLoss}
+                    optionChain={optionChain}
+                    selectedStrike={selectedStrike}
+                    selectedOptionType={selectedOptionType}
+                    setSelectedOptionType={setSelectedOptionType}
+                    selectedExpiry={selectedExpiry}
+                  />
 
-            <div className="glass-card overflow-hidden">
-              <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
-                <div className="flex items-center gap-6">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Option Chain Terminal</h3>
-                  
-                  <div className="flex items-center gap-2 border-l border-white/10 pl-6">
-                    <button
-                      onClick={() => setIsReversed(!isReversed)}
-                      className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
-                        isReversed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500 hover:text-slate-300'
-                      }`}
-                    >
-                      <svg className={`w-3 h-3 transition-transform ${isReversed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                      </svg>
-                      {isReversed ? 'Descending' : 'Ascending'}
-                    </button>
+                  <div className="glass-card overflow-hidden">
+                    <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+                      <div className="flex items-center gap-6">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Option Chain Terminal</h3>
+                        
+                        <div className="flex items-center gap-2 border-l border-white/10 pl-6">
+                          <button
+                            onClick={() => setIsReversed(!isReversed)}
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
+                              isReversed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            <svg className={`w-3 h-3 transition-transform ${isReversed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                            </svg>
+                            {isReversed ? 'Descending' : 'Ascending'}
+                          </button>
 
-                    <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 ml-2">
-                      {[10, 15, 20, 30].map(depth => (
-                        <button
-                          key={depth}
-                          onClick={() => setStrikeDepth(depth)}
-                          className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
-                            strikeDepth === depth ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 hover:text-slate-300'
-                          }`}
-                        >
-                          ±{depth}
-                        </button>
-                      ))}
+                          <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 ml-2">
+                            {[10, 15, 20, 30].map(depth => (
+                              <button
+                                key={depth}
+                                onClick={() => setStrikeDepth(depth)}
+                                className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
+                                  strikeDepth === depth ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                              >
+                                ±{depth}
+                              </button>
+                            ))}
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              const row = document.querySelector('.active-row') || document.querySelector('[data-atm="true"]');
+                              row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }}
+                            className="ml-4 flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase bg-white/5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all border border-transparent hover:border-emerald-500/20"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Center ATM
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 ml-4">
+                          <button
+                            onClick={() => setViewMode('table')}
+                            className={`px-3 py-1 rounded text-[9px] font-bold transition-all flex items-center gap-1.5 ${
+                              viewMode === 'table' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Table
+                          </button>
+                          <button
+                            onClick={() => setViewMode('profile')}
+                            className={`px-3 py-1 rounded text-[9px] font-bold transition-all flex items-center gap-1.5 ${
+                              viewMode === 'profile' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Profile
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        {error && (
+                          <div className="flex items-center gap-2 text-rose-400 text-[10px] font-bold uppercase animate-pulse">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            {error}
+                          </div>
+                        )}
+                        {loading && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                            <span className="text-[10px] text-emerald-500 font-bold uppercase">Syncing...</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    <button
-                      onClick={() => {
-                        const row = document.querySelector('.active-row') || document.querySelector('[data-atm="true"]');
-                        row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }}
-                      className="ml-4 flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase bg-white/5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all border border-transparent hover:border-emerald-500/20"
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      Center ATM
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 ml-4">
-                    <button
-                      onClick={() => setViewMode('table')}
-                      className={`px-3 py-1 rounded text-[9px] font-bold transition-all flex items-center gap-1.5 ${
-                        viewMode === 'table' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'
-                      }`}
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Table
-                    </button>
-                    <button
-                      onClick={() => setViewMode('profile')}
-                      className={`px-3 py-1 rounded text-[9px] font-bold transition-all flex items-center gap-1.5 ${
-                        viewMode === 'profile' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'
-                      }`}
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      Profile
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {error && (
-                    <div className="flex items-center gap-2 text-rose-400 text-[10px] font-bold uppercase animate-pulse">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      {error}
+                    
+                    <div className="max-h-[600px] overflow-y-auto premium-scroll relative">
+                      {optionChain ? (
+                        viewMode === 'table' ? (
+                          <OptionChain
+                            strikes={optionChain.strikes}
+                            atmStrike={atmStrike}
+                            selectedStrike={selectedStrike}
+                            onSelectStrike={(strike, type) => {
+                              setSelectedStrike(strike);
+                              if (type) setSelectedOptionType(type);
+                            }}
+                            isReversed={isReversed}
+                            strikeDepth={strikeDepth}
+                            spotPrice={optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP}
+                            expiryDate={selectedExpiry}
+                          />
+                        ) : (
+                          <OIProfile 
+                            data={optionChain}
+                            isReversed={isReversed}
+                            strikeDepth={strikeDepth}
+                            atmStrike={atmStrike}
+                          />
+                        )
+                      ) : (
+                        <div className="h-[400px] flex flex-col items-center justify-center text-slate-500 space-y-4">
+                          <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 animate-spin" />
+                          <p className="text-sm font-medium">Synchronizing with exchange data...</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {loading && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
-                      <span className="text-[10px] text-emerald-500 font-bold uppercase">Syncing...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="max-h-[600px] overflow-y-auto premium-scroll relative">
-                {optionChain ? (
-                  viewMode === 'table' ? (
-                    <OptionChain
-                      strikes={optionChain.strikes}
-                      atmStrike={atmStrike}
-                      selectedStrike={selectedStrike}
-                      onSelectStrike={(strike, type) => {
-                        setSelectedStrike(strike);
-                        if (type) setSelectedOptionType(type);
-                      }}
-                      isReversed={isReversed}
-                      strikeDepth={strikeDepth}
-                      spotPrice={optionChain.futLTP > 0 ? optionChain.futLTP : optionChain.spotLTP}
-                      expiryDate={selectedExpiry}
-                    />
-                  ) : (
-                    <OIProfile 
-                      data={optionChain}
-                      isReversed={isReversed}
-                      strikeDepth={strikeDepth}
-                      atmStrike={atmStrike}
-                    />
-                  )
-                ) : (
-                  <div className="h-[400px] flex flex-col items-center justify-center text-slate-500 space-y-4">
-                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 animate-spin" />
-                    <p className="text-sm font-medium">Synchronizing with exchange data...</p>
                   </div>
-                )}
-              </div>
+                </>
+              ) : activeAsset === 'EQUITY' ? (
+                <EquityTerminal capital={capital} riskPercent={riskPercent} />
+              ) : activeAsset === 'CRYPTO' ? (
+                <CryptoTerminal capital={capital} riskPercent={riskPercent} />
+              ) : (
+                <ForexTerminal capital={capital} riskPercent={riskPercent} />
+              )}
             </div>
           </div>
         </div>

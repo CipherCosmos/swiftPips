@@ -6,33 +6,25 @@ interface AssetClassSwitcherProps {
 }
 
 export function AssetClassSwitcher({ activeAsset, onAssetChange }: AssetClassSwitcherProps) {
-  const assets: { id: AssetClass; label: string; icon: string; color: string }[] = [
-    { id: 'OPTIONS', label: 'Options', icon: '💎', color: 'emerald' },
-    { id: 'EQUITY', label: 'Equity', icon: '🏛️', color: 'blue' },
-    { id: 'CRYPTO', label: 'Crypto', icon: '⚡', color: 'amber' },
-    { id: 'FOREX', label: 'Forex', icon: '🌍', color: 'rose' },
+  const assets: { id: AssetClass; label: string }[] = [
+    { id: 'OPTIONS', label: 'Options' },
+    { id: 'EQUITY',  label: 'Equity'  },
+    { id: 'CRYPTO',  label: 'Crypto'  },
+    { id: 'FOREX',   label: 'Forex'   },
   ];
 
-  const assetStyles: Record<AssetClass, { bg: string; shadow: string; color: string }> = {
-    OPTIONS: { bg: 'bg-emerald-600', shadow: 'shadow-emerald-900/40', color: 'text-emerald-400' },
-    EQUITY: { bg: 'bg-blue-600', shadow: 'shadow-blue-900/40', color: 'text-blue-400' },
-    CRYPTO: { bg: 'bg-amber-600', shadow: 'shadow-amber-900/40', color: 'text-amber-400' },
-    FOREX: { bg: 'bg-rose-600', shadow: 'shadow-rose-900/40', color: 'text-rose-400' },
-  };
-
   return (
-    <div className="flex items-center gap-1 bg-slate-900/50 rounded-xl p-1 border border-white/5 mx-auto">
+    <div className="flex items-center gap-0.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg p-0.5">
       {assets.map((asset) => (
         <button
           key={asset.id}
           onClick={() => onAssetChange(asset.id)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider
-            ${activeAsset === asset.id 
-              ? `${assetStyles[asset.id].bg} text-white shadow-lg ${assetStyles[asset.id].shadow}`
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-            }`}
+          className={`px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wide transition-colors ${
+            activeAsset === asset.id
+              ? 'bg-[var(--cyan-600)] text-white'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+          }`}
         >
-          <span>{asset.icon}</span>
           {asset.label}
         </button>
       ))}

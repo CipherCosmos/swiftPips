@@ -66,61 +66,53 @@ export function SearchableCombobox({
 
   return (
     <div className="relative" ref={containerRef}>
-      <label className="block text-slate-400 text-xs font-bold uppercase mb-2 tracking-widest opacity-80">
+      <label className="block text-[var(--text-muted)] text-[11px] font-semibold uppercase tracking-widest mb-1.5">
         {label}
       </label>
-      
-      <div 
-        className={`relative w-full glass-input rounded-lg flex items-center transition-all ${isOpen ? 'ring-2 ring-emerald-500/50 bg-slate-800/80' : ''}`}
-        onClick={() => {
-          setIsOpen(true);
-          inputRef.current?.focus();
-        }}
+
+      <div
+        className={`relative sp-input rounded-lg flex items-center cursor-text transition-colors ${isOpen ? 'border-[var(--cyan-500)]' : ''}`}
+        onClick={() => { setIsOpen(true); inputRef.current?.focus(); }}
       >
         <input
           ref={inputRef}
           type="text"
-          className="w-full bg-transparent px-3 py-2 text-sm outline-none text-slate-200 placeholder:text-slate-500 cursor-text"
+          className="w-full bg-transparent px-3 py-2 text-sm outline-none text-[var(--text-primary)] placeholder:text-[var(--text-faint)]"
           placeholder={isOpen ? placeholder : value || placeholder}
           value={isOpen ? searchQuery : value}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setIsOpen(true);
-          }}
+          onChange={(e) => { setSearchQuery(e.target.value); setIsOpen(true); }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           readOnly={!isOpen}
         />
-        <div className="absolute right-3 text-slate-500 flex items-center gap-1 pointer-events-none">
-          {!isOpen && <span className="text-[10px] font-mono opacity-50 px-1 border border-white/10 rounded hidden sm:inline-block tracking-tighter">Type to Search</span>}
-          <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180 text-emerald-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="absolute right-3 flex items-center gap-1 pointer-events-none">
+          <svg className={`w-3.5 h-3.5 transition-transform text-[var(--text-muted)] ${isOpen ? 'rotate-180 !text-[var(--cyan-400)]' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden backdrop-blur-xl">
-          <div className="max-h-64 overflow-y-auto premium-scroll">
+        <div className="absolute z-50 w-full mt-1 bg-[var(--bg-raised)] border border-[var(--border-md)] rounded-lg shadow-2xl shadow-black/60 overflow-hidden">
+          <div className="max-h-60 overflow-y-auto premium-scroll">
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-slate-500 text-center">No results found</div>
+              <div className="px-4 py-3 text-sm text-[var(--text-muted)] text-center">No results</div>
             ) : (
               <ul className="py-1">
                 {filteredOptions.map((opt) => (
                   <li
                     key={opt}
                     className={`px-4 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between ${
-                      opt === value ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                      opt === value
+                        ? 'bg-[var(--cyan-dim)] text-[var(--cyan-400)] font-semibold'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]'
                     }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelect(opt);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); handleSelect(opt); }}
                   >
                     <span>{opt}</span>
                     {opt === value && (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg className="w-3.5 h-3.5 text-[var(--cyan-400)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </li>

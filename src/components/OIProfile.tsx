@@ -98,11 +98,11 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
 
   const BAR_W = 40;
 
-  const modeConfig: Record<ProfileMode, { label: string; icon: string; desc: string }> = {
-    walls: { label: 'OI Walls', icon: '🧱', desc: 'Support & Resistance walls from total Open Interest' },
-    momentum: { label: 'Momentum', icon: '⚡', desc: 'Change in OI — where fresh money is flowing RIGHT NOW' },
-    net: { label: 'Net Bias', icon: '🧭', desc: 'PUT OI − CALL OI per strike — net directional bias' },
-    gamma: { label: 'Gamma Exp', icon: '💥', desc: 'OI-weighted Gamma Exposure — sharpest moves predicted here' },
+  const modeConfig: Record<ProfileMode, { label: string; desc: string }> = {
+    walls:    { label: 'OI Walls',   desc: 'Support & Resistance walls from total Open Interest' },
+    momentum: { label: 'Momentum',   desc: 'Change in OI — where fresh money is flowing RIGHT NOW' },
+    net:      { label: 'Net Bias',   desc: 'PUT OI − CALL OI per strike — net directional bias' },
+    gamma:    { label: 'Gamma Exp',  desc: 'OI-weighted Gamma Exposure — sharpest moves predicted here' },
   };
 
   // ─── Bar Renderers ───
@@ -118,28 +118,28 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
         <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
           {s.pe_oi > 0 && (
             <div
-              className={`relative w-full transition-all duration-500 rounded-t-sm ${isMaxPut ? 'bg-emerald-500/50 border-t border-emerald-500' : 'bg-emerald-500/20'}`}
+              className={`relative w-full transition-all duration-500 rounded-t-sm ${isMaxPut ? 'bg-[var(--cyan-500)]/50 border-t border-[var(--cyan-500)]' : 'bg-[var(--cyan-500)]/20'}`}
               style={{ height: `${Math.max(peH, 3)}%` }}
             >
-              {isMaxPut && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-black text-slate-200 bg-[#0B0E14] px-1 rounded border border-white/10 whitespace-nowrap">MAX</div>}
+              {isMaxPut && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-bold text-[var(--text-primary)] bg-[var(--bg-deep)] px-1 rounded border border-[var(--border-md)] whitespace-nowrap">MAX</div>}
             </div>
           )}
           <div className="absolute -top-8 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-            <span className="text-[9px] font-bold bg-[#0B0E14] border border-white/10 text-slate-300 px-1.5 py-0.5 rounded shadow-xl">P:{(s.pe_oi / 1000).toFixed(0)}k</span>
+            <span className="text-[9px] font-bold bg-[var(--bg-raised)] border border-[var(--border-md)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded shadow-xl">P:{(s.pe_oi / 1000).toFixed(0)}k</span>
           </div>
         </div>
         {/* CALL bar */}
         <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
           {s.ce_oi > 0 && (
             <div
-              className={`relative w-full transition-all duration-500 rounded-t-sm ${isMaxCall ? 'bg-rose-500/50 border-t border-rose-500' : 'bg-rose-500/20'}`}
+              className={`relative w-full transition-all duration-500 rounded-t-sm ${isMaxCall ? 'bg-[var(--rose-500)]/50 border-t border-[var(--rose-500)]' : 'bg-[var(--rose-500)]/20'}`}
               style={{ height: `${Math.max(ceH, 3)}%` }}
             >
-              {isMaxCall && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-black text-slate-200 bg-[#0B0E14] px-1 rounded border border-white/10 whitespace-nowrap">MAX</div>}
+              {isMaxCall && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-bold text-[var(--text-primary)] bg-[var(--bg-deep)] px-1 rounded border border-[var(--border-md)] whitespace-nowrap">MAX</div>}
             </div>
           )}
           <div className="absolute -top-8 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-            <span className="text-[9px] font-bold bg-[#0B0E14] border border-white/10 text-slate-300 px-1.5 py-0.5 rounded shadow-xl">C:{(s.ce_oi / 1000).toFixed(0)}k</span>
+            <span className="text-[9px] font-bold bg-[var(--bg-raised)] border border-[var(--border-md)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded shadow-xl">C:{(s.ce_oi / 1000).toFixed(0)}k</span>
           </div>
         </div>
       </div>
@@ -164,48 +164,48 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
           {/* PE OIC up */}
           <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
             {oic.pe > 0 && (
-              <div className="w-full bg-emerald-500/30 rounded-t-sm transition-all duration-500"
+              <div className="w-full bg-[var(--cyan-500)]/30 rounded-t-sm transition-all duration-500"
                 style={{ height: `${Math.max(peH, 4)}%` }} />
             )}
             <div className="absolute -top-6 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-              <span className="text-[8px] font-bold bg-[#0B0E14] border border-white/10 text-slate-300 px-1 py-0.5 rounded">{(oic.pe / 1000).toFixed(0)}k</span>
+              <span className="text-[8px] font-bold bg-[var(--bg-raised)] border border-[var(--border-md)] text-[var(--text-secondary)] px-1 py-0.5 rounded">{(oic.pe / 1000).toFixed(0)}k</span>
             </div>
           </div>
           {/* CE OIC up */}
           <div className="flex flex-col items-center justify-end h-full w-[16px] relative group/bar">
             {oic.ce > 0 && (
-              <div className="w-full bg-rose-500/30 rounded-t-sm transition-all duration-500"
+              <div className="w-full bg-[var(--rose-500)]/30 rounded-t-sm transition-all duration-500"
                 style={{ height: `${Math.max(ceH, 4)}%` }} />
             )}
             <div className="absolute -top-6 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-              <span className="text-[8px] font-bold bg-[#0B0E14] border border-white/10 text-slate-300 px-1 py-0.5 rounded">{(oic.ce / 1000).toFixed(0)}k</span>
+              <span className="text-[8px] font-bold bg-[var(--bg-raised)] border border-[var(--border-md)] text-[var(--text-secondary)] px-1 py-0.5 rounded">{(oic.ce / 1000).toFixed(0)}k</span>
             </div>
           </div>
         </div>
         {/* Center axis */}
-        <div className="w-full h-[1px] bg-white/10 my-0.5" />
+        <div className="w-full h-[1px] bg-[var(--border-md)] my-0.5" />
         {/* Negative = unwinding (below center) */}
         <div className="flex items-start gap-[2px] h-[45%]">
           <div className="flex flex-col items-center justify-start h-full w-[16px] relative">
             {oic.pe < 0 && (
-              <div className={`w-full rounded-b-sm transition-all duration-500 ${peSignal === 'unwind' ? 'bg-rose-500/30' : 'bg-white/5'}`}
+              <div className={`w-full rounded-b-sm transition-all duration-500 ${peSignal === 'unwind' ? 'bg-[var(--rose-500)]/30' : 'bg-[var(--border)]'}`}
                 style={{ height: `${Math.max(peH, 4)}%` }}>
-                {peSignal === 'unwind' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 text-[6px] font-bold text-rose-300 opacity-60">▼</div>}
+                {peSignal === 'unwind' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 text-[6px] font-bold text-[var(--rose-300)] opacity-60">▼</div>}
               </div>
             )}
           </div>
           <div className="flex flex-col items-center justify-start h-full w-[16px] relative">
             {oic.ce < 0 && (
-              <div className={`w-full rounded-b-sm transition-all duration-500 ${ceSignal === 'cover' ? 'bg-emerald-500/30' : 'bg-white/5'}`}
+              <div className={`w-full rounded-b-sm transition-all duration-500 ${ceSignal === 'cover' ? 'bg-[var(--cyan-500)]/30' : 'bg-[var(--border)]'}`}
                 style={{ height: `${Math.max(ceH, 4)}%` }}>
-                {ceSignal === 'cover' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 text-[6px] font-bold text-emerald-300 opacity-60">▲</div>}
+                {ceSignal === 'cover' && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 text-[6px] font-bold text-[var(--cyan-300)] opacity-60">▲</div>}
               </div>
             )}
           </div>
         </div>
         {/* Signal badges */}
         {(ceSignal === 'cover' || peSignal === 'unwind') && (
-          <div className={`absolute bottom-14 text-[6px] font-black px-1 py-0.5 rounded animate-pulse z-50 ${ceSignal === 'cover' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}`}>
+          <div className={`absolute bottom-14 text-[6px] font-bold px-1 py-0.5 rounded animate-pulse z-50 ${ceSignal === 'cover' ? 'bg-[var(--cyan-dim)] text-[var(--cyan-300)] border border-[var(--border-cyan)]' : 'bg-[var(--rose-dim)] text-[var(--rose-300)] border border-[var(--border-rose)]'}`}>
             {ceSignal === 'cover' ? 'SC' : 'LU'}
           </div>
         )}
@@ -223,22 +223,22 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
         {/* Bullish (above) */}
         <div className="flex items-end h-[48%] w-full justify-center">
           {isBullish && (
-            <div className="w-[24px] bg-emerald-500/20 rounded-t-sm transition-all duration-500 relative group/bar"
+            <div className="w-[24px] bg-[var(--cyan-500)]/20 rounded-t-sm transition-all duration-500 relative group/bar"
               style={{ height: `${Math.max(pct, 3)}%` }}>
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-                <span className="text-[8px] font-bold bg-[#0B0E14] border border-white/10 text-slate-300 px-1 py-0.5 rounded">+{(net / 1000).toFixed(0)}k</span>
+                <span className="text-[8px] font-bold bg-[var(--bg-raised)] border border-[var(--border-md)] text-[var(--text-secondary)] px-1 py-0.5 rounded">+{(net / 1000).toFixed(0)}k</span>
               </div>
             </div>
           )}
         </div>
-        <div className="w-full h-[1px] bg-white/10" />
+        <div className="w-full h-[1px] bg-[var(--border-md)]" />
         {/* Bearish (below) */}
         <div className="flex items-start h-[48%] w-full justify-center">
           {!isBullish && net !== 0 && (
-            <div className="w-[24px] bg-rose-500/20 rounded-b-sm transition-all duration-500 relative group/bar"
+            <div className="w-[24px] bg-[var(--rose-500)]/20 rounded-b-sm transition-all duration-500 relative group/bar"
               style={{ height: `${Math.max(pct, 3)}%` }}>
               <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-                <span className="text-[8px] font-bold bg-[#0B0E14] border border-white/10 text-slate-300 px-1 py-0.5 rounded">{(net / 1000).toFixed(0)}k</span>
+                <span className="text-[8px] font-bold bg-[var(--bg-raised)] border border-[var(--border-md)] text-[var(--text-secondary)] px-1 py-0.5 rounded">{(net / 1000).toFixed(0)}k</span>
               </div>
             </div>
           )}
@@ -257,29 +257,29 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
       <div className="flex flex-col items-center h-full justify-center">
         <div className="flex items-end h-[48%] w-full justify-center">
           {isBullish && (
-            <div className={`w-[24px] rounded-t-sm transition-all duration-500 relative group/bar ${intensity > 0.7 ? 'shadow-[0_0_15px_rgba(16,185,129,0.5)]' : ''}`}
+            <div className={`w-[24px] rounded-t-sm transition-all duration-500 relative group/bar ${intensity > 0.7 ? 'shadow-[0_0_12px_rgba(6,182,212,0.4)]' : ''}`}
               style={{
                 height: `${Math.max(netPct, 3)}%`,
-                background: `linear-gradient(to top, rgba(16,185,129,${0.3 + intensity * 0.7}), rgba(52,211,153,${0.5 + intensity * 0.5}))`,
+                background: `linear-gradient(to top, rgba(6,182,212,${0.3 + intensity * 0.7}), rgba(34,211,238,${0.5 + intensity * 0.5}))`,
               }}>
-              {intensity > 0.6 && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[6px] font-black text-emerald-300 animate-pulse">⚡</div>}
+              {intensity > 0.6 && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[6px] font-bold text-[var(--cyan-300)] animate-pulse">⚡</div>}
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-                <span className="text-[8px] font-black bg-slate-950 border border-emerald-500/40 text-emerald-300 px-1 py-0.5 rounded">GEX+</span>
+                <span className="text-[8px] font-bold bg-[var(--bg-deep)] border border-[var(--border-cyan)] text-[var(--cyan-300)] px-1 py-0.5 rounded">GEX+</span>
               </div>
             </div>
           )}
         </div>
-        <div className="w-full h-[1px] bg-white/10" />
+        <div className="w-full h-[1px] bg-[var(--border-md)]" />
         <div className="flex items-start h-[48%] w-full justify-center">
           {!isBullish && ge.net !== 0 && (
-            <div className={`w-[24px] rounded-b-sm transition-all duration-500 relative group/bar ${intensity > 0.7 ? 'shadow-[0_0_15px_rgba(225,29,72,0.5)]' : ''}`}
+            <div className={`w-[24px] rounded-b-sm transition-all duration-500 relative group/bar ${intensity > 0.7 ? 'shadow-[0_0_12px_rgba(244,63,94,0.4)]' : ''}`}
               style={{
                 height: `${Math.max(netPct, 3)}%`,
-                background: `linear-gradient(to bottom, rgba(225,29,72,${0.3 + intensity * 0.7}), rgba(251,113,133,${0.3 + intensity * 0.5}))`,
+                background: `linear-gradient(to bottom, rgba(244,63,94,${0.3 + intensity * 0.7}), rgba(251,113,133,${0.3 + intensity * 0.5}))`,
               }}>
-              {intensity > 0.6 && <div className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 text-[6px] font-black text-rose-300 animate-pulse">⚡</div>}
+              {intensity > 0.6 && <div className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 text-[6px] font-bold text-[var(--rose-300)] animate-pulse">⚡</div>}
               <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-[100] pointer-events-none">
-                <span className="text-[8px] font-black bg-slate-950 border border-rose-500/40 text-rose-300 px-1 py-0.5 rounded">GEX−</span>
+                <span className="text-[8px] font-bold bg-[var(--bg-deep)] border border-[var(--border-rose)] text-[var(--rose-300)] px-1 py-0.5 rounded">GEX−</span>
               </div>
             </div>
           )}
@@ -298,64 +298,63 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#020617]/80 border-t border-white/5">
-      {/* ─── Header: Mode Tabs + Legend ─── */}
-      <div className="px-4 py-3 border-b border-white/5 bg-black/20">
+    <div className="flex flex-col h-full bg-[var(--bg-card)] border-t border-[var(--border)]">
+      {/* ─── Header ─── */}
+      <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-raised)]">
         <div className="flex items-center justify-between">
           {/* Mode Tabs */}
-          <div className="flex items-center gap-1 bg-slate-900/80 rounded-lg p-0.5 border border-white/5">
+          <div className="flex items-center gap-0.5 bg-[var(--bg-deep)] rounded-lg p-0.5 border border-[var(--border)]">
             {(Object.keys(modeConfig) as ProfileMode[]).map(m => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
-                className={`px-2.5 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
                   mode === m
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40'
-                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                    ? 'bg-[var(--cyan-600)] text-white'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
                 }`}
               >
-                <span>{modeConfig[m].icon}</span>
                 {modeConfig[m].label}
               </button>
             ))}
           </div>
 
-          {/* Spot + Legend */}
+          {/* Legend + Spot */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 text-[9px] font-bold">
+            <div className="flex items-center gap-3 text-[10px] font-semibold">
               {mode === 'walls' && (
                 <>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500" /> PUT (Support)</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-rose-500" /> CALL (Resistance)</span>
+                  <span className="flex items-center gap-1.5 text-[var(--cyan-400)]"><span className="w-2 h-2 rounded-sm bg-[var(--cyan-500)]" /> PUT (Support)</span>
+                  <span className="flex items-center gap-1.5 text-[var(--rose-400)]"><span className="w-2 h-2 rounded-sm bg-[var(--rose-500)]" /> CALL (Resistance)</span>
                 </>
               )}
               {mode === 'momentum' && (
                 <>
-                  <span className="flex items-center gap-1 text-emerald-400"><span className="animate-pulse">▲</span> Short Cover (Bullish)</span>
-                  <span className="flex items-center gap-1 text-rose-400"><span className="animate-pulse">▼</span> Long Unwind (Bearish)</span>
+                  <span className="flex items-center gap-1.5 text-[var(--cyan-400)]"><span className="animate-pulse">▲</span> Short Cover</span>
+                  <span className="flex items-center gap-1.5 text-[var(--rose-400)]"><span className="animate-pulse">▼</span> Long Unwind</span>
                 </>
               )}
               {mode === 'net' && (
                 <>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500" /> Bullish Bias</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-rose-500" /> Bearish Bias</span>
+                  <span className="flex items-center gap-1.5 text-[var(--cyan-400)]"><span className="w-2 h-2 rounded-sm bg-[var(--cyan-500)]" /> Bullish Bias</span>
+                  <span className="flex items-center gap-1.5 text-[var(--rose-400)]"><span className="w-2 h-2 rounded-sm bg-[var(--rose-500)]" /> Bearish Bias</span>
                 </>
               )}
               {mode === 'gamma' && (
                 <>
-                  <span className="flex items-center gap-1 text-emerald-400">⚡ Buyer Zone</span>
-                  <span className="flex items-center gap-1 text-rose-400">⚡ Seller Zone</span>
+                  <span className="flex items-center gap-1.5 text-[var(--cyan-400)]">⚡ Buyer Zone</span>
+                  <span className="flex items-center gap-1.5 text-[var(--rose-400)]">⚡ Seller Zone</span>
                 </>
               )}
             </div>
-            <div className="h-6 w-[1px] bg-white/10" />
+            <div className="h-5 w-px bg-[var(--border-md)]" />
             <div className="flex flex-col items-end">
-              <span className="text-[8px] text-slate-500 uppercase font-bold">Spot</span>
-              <span className="text-xs font-black text-amber-400 font-mono">₹{spotLTP.toLocaleString()}</span>
+              <span className="text-[9px] text-[var(--text-muted)] uppercase font-semibold">Spot</span>
+              <span className="text-xs font-bold text-[var(--text-primary)] font-mono">₹{spotLTP.toLocaleString()}</span>
             </div>
           </div>
         </div>
-        <div className="text-[8px] text-slate-600 mt-1.5 italic">{modeConfig[mode].desc}</div>
+        <div className="text-[10px] text-[var(--text-faint)] mt-1.5 italic">{modeConfig[mode].desc}</div>
       </div>
 
       {/* ─── Chart Area ─── */}
@@ -370,11 +369,11 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
               className="absolute top-0 bottom-10 w-[2px] z-30 pointer-events-none transition-all duration-300"
               style={{ left: `${spotPosition * BAR_W + BAR_W / 2}px` }}
             >
-              <div className="h-full bg-amber-400/15 w-full relative">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-amber-400 px-2 py-0.5 rounded-sm shadow-[0_0_15px_rgba(245,158,11,0.5)] z-40">
-                  <span className="text-[7px] font-black text-slate-950 uppercase tracking-tighter">SPOT</span>
+              <div className="h-full bg-[var(--cyan-500)]/10 w-full relative">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[var(--cyan-500)] px-2 py-0.5 rounded-sm z-40">
+                  <span className="text-[7px] font-bold text-white uppercase tracking-tighter">SPOT</span>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[var(--cyan-500)]/20 via-transparent to-transparent" />
               </div>
             </div>
           )}
@@ -388,7 +387,7 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
               <div key={`marker-${s.strike_price}`}
                 className="absolute top-2 bottom-10 pointer-events-none z-10"
                 style={{ left: `${i * BAR_W}px`, width: `${BAR_W}px` }}>
-                <div className={`h-full w-full border-x border-dashed ${isMaxPut ? 'border-emerald-500/15' : 'border-rose-500/15'}`} />
+                <div className={`h-full w-full border-x border-dashed ${isMaxPut ? 'border-[var(--cyan-500)]/15' : 'border-[var(--rose-500)]/15'}`} />
               </div>
             );
           })}
@@ -399,18 +398,18 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
               const isATM = Math.abs(s.strike_price - spotLTP) < interval;
 
               return (
-                <div key={s.strike_price} className={`flex flex-col items-center group relative h-full justify-end hover:z-50`} style={{ width: `${BAR_W}px` }}>
+                <div key={s.strike_price} className="flex flex-col items-center group relative h-full justify-end hover:z-50" style={{ width: `${BAR_W}px` }}>
                   <div className="flex-1 flex items-stretch w-full relative">
                     {renderBar(s, idx)}
                   </div>
 
                   {/* Strike Label */}
                   <div className={`mt-2 flex flex-col items-center z-10 w-full ${isATM ? 'scale-105' : 'scale-90'} transition-transform`}>
-                    <div className={`text-[8px] font-black px-1 py-0.5 rounded border transition-all whitespace-nowrap
-                      ${isATM
-                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
-                        : 'bg-slate-900/90 border-slate-800 text-slate-500 group-hover:text-white group-hover:bg-slate-800'}`}
-                    >
+                    <div className={`text-[8px] font-bold px-1 py-0.5 rounded border transition-all whitespace-nowrap ${
+                      isATM
+                        ? 'bg-[var(--cyan-dim)] border-[var(--border-cyan)] text-[var(--cyan-300)]'
+                        : 'bg-[var(--bg-raised)] border-[var(--border)] text-[var(--text-muted)] group-hover:text-[var(--text-primary)] group-hover:bg-[var(--bg-card)]'
+                    }`}>
                       {s.strike_price.toLocaleString()}
                     </div>
                   </div>
@@ -421,29 +420,30 @@ export function OIProfile({ data, isReversed, strikeDepth, atmStrike }: OIProfil
         </div>
       </div>
 
-      {/* ─── Footer: Key Levels Summary ─── */}
-      <div className="px-4 py-2.5 border-t border-white/5 bg-black/40 flex justify-between items-center">
-        <div className="flex items-center gap-4 text-[9px]">
+      {/* ─── Footer ─── */}
+      <div className="px-4 py-2.5 border-t border-[var(--border)] bg-[var(--bg-raised)] flex justify-between items-center">
+        <div className="flex items-center gap-4 text-[10px]">
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-3 bg-emerald-500 rounded-sm" />
-            <span className="text-slate-400 font-bold uppercase">Support:</span>
-            <span className="text-emerald-400 font-mono font-black">{analytics.maxPutOIStrike.strike_price.toLocaleString()}</span>
-            <span className="text-slate-600 font-mono">({(analytics.maxPutOIStrike.pe_oi / 100000).toFixed(1)}L)</span>
+            <div className="w-1.5 h-3 bg-[var(--cyan-500)] rounded-sm" />
+            <span className="text-[var(--text-muted)] font-semibold uppercase">Support:</span>
+            <span className="text-[var(--cyan-400)] font-mono font-bold">{analytics.maxPutOIStrike.strike_price.toLocaleString()}</span>
+            <span className="text-[var(--text-faint)] font-mono">({(analytics.maxPutOIStrike.pe_oi / 100000).toFixed(1)}L)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-3 bg-rose-500 rounded-sm" />
-            <span className="text-slate-400 font-bold uppercase">Resistance:</span>
-            <span className="text-rose-400 font-mono font-black">{analytics.maxCallOIStrike.strike_price.toLocaleString()}</span>
-            <span className="text-slate-600 font-mono">({(analytics.maxCallOIStrike.ce_oi / 100000).toFixed(1)}L)</span>
+            <div className="w-1.5 h-3 bg-[var(--rose-500)] rounded-sm" />
+            <span className="text-[var(--text-muted)] font-semibold uppercase">Resistance:</span>
+            <span className="text-[var(--rose-400)] font-mono font-bold">{analytics.maxCallOIStrike.strike_price.toLocaleString()}</span>
+            <span className="text-[var(--text-faint)] font-mono">({(analytics.maxCallOIStrike.ce_oi / 100000).toFixed(1)}L)</span>
           </div>
-          <div className="h-4 w-[1px] bg-white/10" />
+          <div className="h-4 w-px bg-[var(--border-md)]" />
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-bold uppercase">Range:</span>
-            <span className="text-amber-400 font-mono font-bold">{(analytics.maxCallOIStrike.strike_price - analytics.maxPutOIStrike.strike_price).toLocaleString()} pts</span>
+            <span className="text-[var(--text-muted)] font-semibold uppercase">Range:</span>
+            <span className="text-[var(--text-secondary)] font-mono font-bold">{(analytics.maxCallOIStrike.strike_price - analytics.maxPutOIStrike.strike_price).toLocaleString()} pts</span>
           </div>
         </div>
-        <span className="text-emerald-500/60 text-[8px] font-bold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-500/10 uppercase tracking-wider">Live</span>
+        <span className="tag tag-cyan">Live</span>
       </div>
     </div>
   );
 }
+
